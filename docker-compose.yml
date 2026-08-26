@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL (Used in Dev and Prod)
+  db:
+    image: postgres:15-alpine
+    container_name: atomurl-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: atomuser
+      POSTGRES_PASSWORD: atompassword
+      POSTGRES_DB: atomurl_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atomuser -d atomurl_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  # 2. CacheCore (Used in Dev and Prod)
+  cachecore:
+    image: gurujadhav471/cachecore:latest
+    container_name: atomurl-cachecore
+    restart: always
+    tty: true
+    ports:
+      - "6948:6948"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/6948"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  # 3. Spring Boot App (Used for Prod/Full Stack test only)
+  app:
+    build: .   # Tells Docker to build your local Dockerfile
+    container_name: atomurl-app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      CACHECORE_HOST: cachecore
+    depends_on:
+      db:
+        condition: service_healthy
+      cachecore:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
