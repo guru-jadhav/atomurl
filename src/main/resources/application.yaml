@@ -17,3 +17,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+cachecore:
+    domain: ${CACHECORE_DOMAIN:localhost}
+    port: ${CACHECORE_PORT:6948}
