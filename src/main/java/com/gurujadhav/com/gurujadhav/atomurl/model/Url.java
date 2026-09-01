@@ -27,6 +27,12 @@ public class Url {
     private User user;
 
     @Column(name = "created_date", nullable = false)
-    @Builder.Default
     private LocalDateTime createdDate = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        if(this.createdDate == null){
+            this.createdDate = LocalDateTime.now();
+        }
+    }
 }
