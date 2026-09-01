@@ -1,14 +1,14 @@
 package com.gurujadhav.com.gurujadhav.atomurl.controller;
 
-import com.gurujadhav.cacheclient.CacheClient;
+import com.gurujadhav.com.gurujadhav.atomurl.dto.ApiResponse;
+import com.gurujadhav.com.gurujadhav.atomurl.dto.UrlResponse;
+import com.gurujadhav.com.gurujadhav.atomurl.model.Url;
 import com.gurujadhav.com.gurujadhav.atomurl.service.UrlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
@@ -18,10 +18,6 @@ public class UrlController {
 
     @Autowired
     private UrlService urlService;
-
-    @Autowired
-    private CacheClient cache;
-
 
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> reDirectController (@PathVariable String shortCode){
@@ -34,16 +30,17 @@ public class UrlController {
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(longUrl)).build();
     }
 
-    @GetMapping("/put/{code}")
-    public ResponseEntity<String> putCode(@PathVariable String code){
-        try {
-            cache.SET(0, code, "https://www.google.com", false);
-            return ResponseEntity.status(HttpStatus.OK).body("Added to Cache");
-        } catch (Exception e) {
-            log.info(e.getMessage());
-        }
+    @PostMapping("/api/urls")
+    public ResponseEntity<ApiResponse<UrlResponse>> createShortUrl(@RequestBody Url url){
+        UrlResponse responseData = urlService.createNewShortUrl(url);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Failed to add to Cache");
+        if(responseData == null){
+            ApiResponse<UrlResponse> errorResponse = new ApiResponse<>(500, "failure", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }else{
+            ApiResponse<UrlResponse> successResponse = new ApiResponse<>(201, "success", responseData);
+            return ResponseEntity.status(HttpStatus.CREATED).body(successResponse);
+        }
     }
 
 }
