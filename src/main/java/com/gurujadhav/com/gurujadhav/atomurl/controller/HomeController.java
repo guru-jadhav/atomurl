@@ -10,11 +10,7 @@ public class HomeController {
 
     @GetMapping("/")
     public ResponseEntity<String> handleHomePage(){
+//        we need to server the index.html/landing page for out website
         return ResponseEntity.status(HttpStatus.OK).body("Home Page");
-    }
-
-    @GetMapping("/api")
-    public ResponseEntity<String> handleApi() {
-        return ResponseEntity.status(HttpStatus.OK).body("Handle API");
     }
 }

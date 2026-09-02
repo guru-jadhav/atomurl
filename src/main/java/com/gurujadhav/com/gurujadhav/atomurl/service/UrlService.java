@@ -2,18 +2,24 @@ package com.gurujadhav.com.gurujadhav.atomurl.service;
 
 import com.gurujadhav.cacheclient.CacheClient;
 import com.gurujadhav.com.gurujadhav.atomurl.dto.UrlResponse;
+import com.gurujadhav.com.gurujadhav.atomurl.model.Analytical;
 import com.gurujadhav.com.gurujadhav.atomurl.model.Url;
+import com.gurujadhav.com.gurujadhav.atomurl.repository.AnalyticalRepository;
 import com.gurujadhav.com.gurujadhav.atomurl.repository.UrlRepository;
 import com.gurujadhav.com.gurujadhav.atomurl.utils.Base62;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Slf4j
 @Service
 public class UrlService {
+    
+    @Autowired
+    AnalyticalRepository analyticalRepository;
 
     @Autowired
     UrlRepository urlRepo;
@@ -36,6 +42,14 @@ public class UrlService {
         return urlRepo.findById(id);
     }
 
+    private void recordRedirect(String shortCode){
+        long urlId = Base62.decode(shortCode);
+        LocalDate accessDate = LocalDate.now();
+
+        // query to update analytical tables
+        analyticalRepository.incrementClickCount(urlId, accessDate);
+    }
+
     public String resolveShortCode(String shortCode){
 
         Optional<String> cacheUrl = Optional.empty();
@@ -47,6 +61,7 @@ public class UrlService {
         }
 
         if(cacheUrl.isPresent()){
+            recordRedirect(shortCode);
             return cacheUrl.get();
         }
 
@@ -54,6 +69,7 @@ public class UrlService {
         if(dbUrl.isPresent()){
             String longUrl = dbUrl.get().getLongUrl();
             putToCache(shortCode, longUrl);
+            recordRedirect(shortCode);
             return longUrl;
         }
         return "";
