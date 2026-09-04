@@ -25,4 +25,15 @@ public interface AnalyticalRepository extends JpaRepository<Analytical, Analytic
 
     List<Analytical> findByUrlIdAndAccessDateGreaterThanEqualOrderByAccessDateDesc(Long urlId, LocalDate startDate);
 
+    @Transactional
+    @Modifying
+    @Query(value = "WITH rows_to_delete AS (" +
+            "       SELECT ctid FROM public.analytical" +
+            "       WHERE access_date < :cutoffDate" +
+            "       LIMIT :batchSize)" +
+            "       DELETE FROM public.analytical" +
+            "       WHERE ctid IN (SELECT ctid FROM rows_to_delete)",
+        nativeQuery = true)
+    int deleteAnalyticsBatch(@Param("cutoffDate") LocalDate cutoffDate, @Param("batchSize") int batchSize);
+
 }

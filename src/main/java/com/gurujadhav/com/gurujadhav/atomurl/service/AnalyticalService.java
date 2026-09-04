@@ -33,10 +33,7 @@ public class AnalyticalService {
         long id = Base62.decode(shotCode);
         Optional<Analytical> response = analyticalRepo.findById(new AnalyticalId(id, date));
 
-        if(response.isPresent()){
-            return Optional.of(new DailyStatsDto(response.get().getAccessDate(), response.get().getAccessCount()));
-        }
+        return response.map(analytical -> new DailyStatsDto(analytical.getAccessDate(), analytical.getAccessCount()));
 
-        return Optional.empty();
     }
 }
