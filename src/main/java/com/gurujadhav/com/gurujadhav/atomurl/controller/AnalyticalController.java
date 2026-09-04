@@ -3,6 +3,9 @@ package com.gurujadhav.com.gurujadhav.atomurl.controller;
 import com.gurujadhav.com.gurujadhav.atomurl.dto.ApiResponse;
 import com.gurujadhav.com.gurujadhav.atomurl.dto.DailyStatsDto;
 import com.gurujadhav.com.gurujadhav.atomurl.service.AnalyticalService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PastOrPresent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@Validated
 public class AnalyticalController {
 
     @Autowired
@@ -26,13 +30,10 @@ public class AnalyticalController {
     @GetMapping("/api/analytical/{shortCode}")
     public ResponseEntity<ApiResponse<List<DailyStatsDto>>> getAnalyticalForUrl(
             @PathVariable String shortCode,
-            @RequestParam(name = "pastdays", required = false, defaultValue = "30") int pastdays) {
-
-        if(pastdays <= 0 || pastdays > 30){
-            ApiResponse<List<DailyStatsDto>> errorResponse = new ApiResponse<>(400,
-                    "Invalid 'pastdays' value. It must be between 1 and 30 days.", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+            @RequestParam(name = "pastdays", required = false, defaultValue = "30")
+            @Min(value = 1, message = "Invalid 'pastdays' value. It must be between 1 and 30 days.")
+            @Max(value = 30, message = "Invalid 'pastdays' value. It must be between 1 and 30 days.")
+            int pastdays) {
 
         LocalDate startDate = LocalDate.now().minusDays(pastdays - 1);
 
@@ -51,20 +52,14 @@ public class AnalyticalController {
     }
 
     @GetMapping("/api/analytical/{shortCode}/day")
-    @Validated
     public ResponseEntity<ApiResponse<DailyStatsDto>> getStatsForDate(
             @PathVariable String shortCode,
             @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @PastOrPresent(message = "Date cannot be in the future.")
             LocalDate date)
     {
         LocalDate targetDate = date == null ? LocalDate.now() : date;
-
-        if(targetDate.isAfter(LocalDate.now())){
-            ApiResponse<DailyStatsDto> errorResponse =
-                    new ApiResponse<>(400, "Date cannot be in the future.", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
 
         Optional<DailyStatsDto> response = analyticalService.getStatsForDate(shortCode, targetDate);
 
