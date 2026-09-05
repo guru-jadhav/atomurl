@@ -1,11 +1,7 @@
-package com.gurujadhav.com.gurujadhav.atomurl.service;
+package com.gurujadhav.com.gurujadhav.atomurl.url;
 
 import com.gurujadhav.cacheclient.CacheClient;
-import com.gurujadhav.com.gurujadhav.atomurl.dto.UrlResponse;
-import com.gurujadhav.com.gurujadhav.atomurl.model.Analytical;
-import com.gurujadhav.com.gurujadhav.atomurl.model.Url;
-import com.gurujadhav.com.gurujadhav.atomurl.repository.AnalyticalRepository;
-import com.gurujadhav.com.gurujadhav.atomurl.repository.UrlRepository;
+import com.gurujadhav.com.gurujadhav.atomurl.analytical.AnalyticalRepository;
 import com.gurujadhav.com.gurujadhav.atomurl.utils.Base62;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

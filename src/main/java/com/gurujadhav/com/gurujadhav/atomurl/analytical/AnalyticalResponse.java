@@ -1,4 +1,4 @@
-package com.gurujadhav.com.gurujadhav.atomurl.dto;
+package com.gurujadhav.com.gurujadhav.atomurl.analytical;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DailyStatsDto {
+public class AnalyticalResponse {
     private LocalDate date;
     private int clicks;
 }

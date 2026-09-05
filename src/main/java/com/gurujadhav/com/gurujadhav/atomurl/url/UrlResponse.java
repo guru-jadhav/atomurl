@@ -1,4 +1,4 @@
-package com.gurujadhav.com.gurujadhav.atomurl.dto;
+package com.gurujadhav.com.gurujadhav.atomurl.url;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

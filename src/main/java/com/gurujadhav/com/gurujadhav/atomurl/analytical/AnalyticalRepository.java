@@ -1,7 +1,5 @@
-package com.gurujadhav.com.gurujadhav.atomurl.repository;
+package com.gurujadhav.com.gurujadhav.atomurl.analytical;
 
-import com.gurujadhav.com.gurujadhav.atomurl.model.Analytical;
-import com.gurujadhav.com.gurujadhav.atomurl.model.AnalyticalId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

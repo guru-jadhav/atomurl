@@ -1,9 +1,5 @@
-package com.gurujadhav.com.gurujadhav.atomurl.service;
+package com.gurujadhav.com.gurujadhav.atomurl.analytical;
 
-import com.gurujadhav.com.gurujadhav.atomurl.dto.DailyStatsDto;
-import com.gurujadhav.com.gurujadhav.atomurl.model.Analytical;
-import com.gurujadhav.com.gurujadhav.atomurl.model.AnalyticalId;
-import com.gurujadhav.com.gurujadhav.atomurl.repository.AnalyticalRepository;
 import com.gurujadhav.com.gurujadhav.atomurl.utils.Base62;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,21 +15,21 @@ public class AnalyticalService {
     AnalyticalRepository analyticalRepo;
 
 
-    public List<DailyStatsDto> getStatsForUlr(String shortCode, LocalDate startDate){
+    public List<AnalyticalResponse> getStatsForUlr(String shortCode, LocalDate startDate){
 
         long id = Base62.decode(shortCode);
         List<Analytical> analytics = analyticalRepo.findByUrlIdAndAccessDateGreaterThanEqualOrderByAccessDateDesc(id, startDate);
 
         return analytics.stream()
-                .map(stat -> new DailyStatsDto(stat.getAccessDate(), stat.getAccessCount()))
+                .map(stat -> new AnalyticalResponse(stat.getAccessDate(), stat.getAccessCount()))
                 .toList();
     }
 
-    public Optional<DailyStatsDto> getStatsForDate(String shotCode, LocalDate date){
+    public Optional<AnalyticalResponse> getStatsForDate(String shotCode, LocalDate date){
         long id = Base62.decode(shotCode);
         Optional<Analytical> response = analyticalRepo.findById(new AnalyticalId(id, date));
 
-        return response.map(analytical -> new DailyStatsDto(analytical.getAccessDate(), analytical.getAccessCount()));
+        return response.map(analytical -> new AnalyticalResponse(analytical.getAccessDate(), analytical.getAccessCount()));
 
     }
 }

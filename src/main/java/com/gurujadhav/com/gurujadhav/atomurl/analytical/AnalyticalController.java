@@ -1,8 +1,6 @@
-package com.gurujadhav.com.gurujadhav.atomurl.controller;
+package com.gurujadhav.com.gurujadhav.atomurl.analytical;
 
-import com.gurujadhav.com.gurujadhav.atomurl.dto.ApiResponse;
-import com.gurujadhav.com.gurujadhav.atomurl.dto.DailyStatsDto;
-import com.gurujadhav.com.gurujadhav.atomurl.service.AnalyticalService;
+import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
@@ -28,7 +26,7 @@ public class AnalyticalController {
     AnalyticalService analyticalService;
 
     @GetMapping("/api/analytical/{shortCode}")
-    public ResponseEntity<ApiResponse<List<DailyStatsDto>>> getAnalyticalForUrl(
+    public ResponseEntity<ApiResponse<List<AnalyticalResponse>>> getAnalyticalForUrl(
             @PathVariable String shortCode,
             @RequestParam(name = "pastdays", required = false, defaultValue = "30")
             @Min(value = 1, message = "Invalid 'pastdays' value. It must be between 1 and 30 days.")
@@ -38,21 +36,21 @@ public class AnalyticalController {
         LocalDate startDate = LocalDate.now().minusDays(pastdays - 1);
 
 
-        List<DailyStatsDto> cleanedStats = analyticalService.getStatsForUlr(shortCode, startDate);
+        List<AnalyticalResponse> cleanedStats = analyticalService.getStatsForUlr(shortCode, startDate);
 
         if(cleanedStats.isEmpty()){
-            ApiResponse<List<DailyStatsDto>> emptyResponse = new ApiResponse<>(200,
+            ApiResponse<List<AnalyticalResponse>> emptyResponse = new ApiResponse<>(200,
                     "No click stats recorded yet for this URL", cleanedStats);
             return ResponseEntity.status(HttpStatus.OK).body(emptyResponse);
         }
 
-        ApiResponse<List<DailyStatsDto>> successResponse = new ApiResponse<>(200,
+        ApiResponse<List<AnalyticalResponse>> successResponse = new ApiResponse<>(200,
                 "success", cleanedStats);
         return ResponseEntity.status(HttpStatus.OK).body(successResponse);
     }
 
     @GetMapping("/api/analytical/{shortCode}/day")
-    public ResponseEntity<ApiResponse<DailyStatsDto>> getStatsForDate(
+    public ResponseEntity<ApiResponse<AnalyticalResponse>> getStatsForDate(
             @PathVariable String shortCode,
             @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -61,13 +59,13 @@ public class AnalyticalController {
     {
         LocalDate targetDate = date == null ? LocalDate.now() : date;
 
-        Optional<DailyStatsDto> response = analyticalService.getStatsForDate(shortCode, targetDate);
+        Optional<AnalyticalResponse> response = analyticalService.getStatsForDate(shortCode, targetDate);
 
         if(response.isEmpty()){
-            ApiResponse<DailyStatsDto> errorResponse = new ApiResponse<DailyStatsDto>(200, "No click stats recorded yet for this URL", null);
+            ApiResponse<AnalyticalResponse> errorResponse = new ApiResponse<AnalyticalResponse>(200, "No click stats recorded yet for this URL", null);
             return ResponseEntity.status(HttpStatus.OK).body(errorResponse);
         }else{
-            ApiResponse<DailyStatsDto> successResponse = new ApiResponse<DailyStatsDto>(200, "success", response.get());
+            ApiResponse<AnalyticalResponse> successResponse = new ApiResponse<AnalyticalResponse>(200, "success", response.get());
             return ResponseEntity.status(HttpStatus.OK).body(successResponse);
         }
     }
