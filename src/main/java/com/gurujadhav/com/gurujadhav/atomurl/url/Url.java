@@ -1,6 +1,7 @@
-package com.gurujadhav.com.gurujadhav.atomurl.model;
+package com.gurujadhav.com.gurujadhav.atomurl.url;
 
 
+import com.gurujadhav.com.gurujadhav.atomurl.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 

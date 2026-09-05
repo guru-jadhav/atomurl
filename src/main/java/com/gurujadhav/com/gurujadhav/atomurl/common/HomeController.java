@@ -1,4 +1,4 @@
-package com.gurujadhav.com.gurujadhav.atomurl.controller;
+package com.gurujadhav.com.gurujadhav.atomurl.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

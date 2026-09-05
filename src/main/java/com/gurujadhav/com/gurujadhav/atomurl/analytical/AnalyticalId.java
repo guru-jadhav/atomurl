@@ -1,4 +1,4 @@
-package com.gurujadhav.com.gurujadhav.atomurl.model;
+package com.gurujadhav.com.gurujadhav.atomurl.analytical;
 
 
 import lombok.AllArgsConstructor;

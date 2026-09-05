@@ -1,9 +1,6 @@
-package com.gurujadhav.com.gurujadhav.atomurl.controller;
+package com.gurujadhav.com.gurujadhav.atomurl.url;
 
-import com.gurujadhav.com.gurujadhav.atomurl.dto.ApiResponse;
-import com.gurujadhav.com.gurujadhav.atomurl.dto.UrlResponse;
-import com.gurujadhav.com.gurujadhav.atomurl.model.Url;
-import com.gurujadhav.com.gurujadhav.atomurl.service.UrlService;
+import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,8 +27,17 @@ public class UrlController {
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(longUrl)).build();
     }
 
+//    we need to protect this end point when user created with a user_id
+//    we need to validate if user is the user == user_id
     @PostMapping("/api/urls")
     public ResponseEntity<ApiResponse<UrlResponse>> createShortUrl(@RequestBody Url url){
+
+        if(url == null || url.getLongUrl() == null || url.getLongUrl().isBlank()){
+            ApiResponse<UrlResponse> errorResponse = new ApiResponse<>(400,
+                    "Required request body is missing or malformed", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
         UrlResponse responseData = urlService.createNewShortUrl(url);
 
         if(responseData == null){

@@ -1,7 +1,7 @@
 package com.gurujadhav.com.gurujadhav.atomurl.scheduler;
 
-import com.gurujadhav.com.gurujadhav.atomurl.repository.AnalyticalRepository;
-import com.gurujadhav.com.gurujadhav.atomurl.repository.UrlRepository;
+import com.gurujadhav.com.gurujadhav.atomurl.analytical.AnalyticalRepository;
+import com.gurujadhav.com.gurujadhav.atomurl.url.UrlRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,7 +37,7 @@ public class DataRetentionScheduler {
 
             }
 
-        } while (urlBatchCount > 0);
+        } while (urlBatchCount >= batchSize);
     }
 
     private void deleteOldAnalytical(LocalDate cutoffDate, int batchSize){
@@ -57,7 +57,7 @@ public class DataRetentionScheduler {
 
             }
 
-        } while (analyticsBatchCount > 0);
+        } while (analyticsBatchCount >= batchSize);
     }
 
     @Scheduled(cron = "0 0 2 * * *")
