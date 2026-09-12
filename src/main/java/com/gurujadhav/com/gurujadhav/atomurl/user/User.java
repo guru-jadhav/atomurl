@@ -26,4 +26,7 @@ public class User {
     @Column(name = "last_login_date")
     @Builder.Default
     private LocalDateTime lastLoginDate = LocalDateTime.now();
+
+    @Column(name = "signin_provider", nullable = false)
+    private String signinProvider;
 }
