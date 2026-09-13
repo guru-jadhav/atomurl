@@ -1,5 +1,6 @@
 package com.gurujadhav.com.gurujadhav.atomurl.common;
 
+import com.gurujadhav.com.gurujadhav.atomurl.auth.InvalidOtpException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,4 +83,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(
+            org.springframework.web.bind.MethodArgumentNotValidException ex){
+        String message = ex.getBindingResult().getFieldErrors().getFirst().getDefaultMessage();
+        ApiResponse<Void> response = new ApiResponse<>(400, message, null);
+        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+    * Handle RateLimitExceptions
+    * @return a 429 status code with message = ex.getMessage()
+    * */
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRateLimit(RateLimitException ex){
+        ApiResponse<Void> response = new ApiResponse<>(429, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
+    /**
+    * Handle InvalidOtpException for OTP login
+    * @return a 400 status code with message = ex.getMessage()
+    * */
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidOtp(InvalidOtpException ex){
+        ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 }
