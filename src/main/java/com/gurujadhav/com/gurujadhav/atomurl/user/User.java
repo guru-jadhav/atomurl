@@ -24,9 +24,15 @@ public class User {
     private String name;
 
     @Column(name = "last_login_date")
-    @Builder.Default
     private LocalDateTime lastLoginDate = LocalDateTime.now();
 
     @Column(name = "signin_provider", nullable = false)
     private String signinProvider;
+
+    @PrePersist
+    protected void onCreate() {
+        if(this.lastLoginDate == null){
+            this.lastLoginDate = LocalDateTime.now();
+        }
+    }
 }

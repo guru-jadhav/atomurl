@@ -2,6 +2,10 @@ package com.gurujadhav.com.gurujadhav.atomurl.auth;
 
 import com.gurujadhav.cacheclient.CacheClient;
 import com.gurujadhav.com.gurujadhav.atomurl.common.RateLimitException;
+import com.gurujadhav.com.gurujadhav.atomurl.email.EmailService;
+import com.gurujadhav.com.gurujadhav.atomurl.jwt.JwtService;
+import com.gurujadhav.com.gurujadhav.atomurl.user.User;
+import com.gurujadhav.com.gurujadhav.atomurl.user.UserService;
 import com.gurujadhav.com.gurujadhav.atomurl.utils.OTPGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,15 @@ public class AuthService {
 
     @Autowired
     CacheClient cache;
+
+    @Autowired
+    EmailService emailService;
+
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    JwtService  jwtService;
 
     // TODO - configure CacheCore DB[1] for default expiry time of 2 minutes
     private  boolean checkOtpAlreadySent(EmailDto email){
@@ -38,6 +51,9 @@ public class AuthService {
         try {
             cache.SET(1, email.getEmail(), OTP);
             // we need to call the email service here
+            String subject = "ATOM URL";
+            String body = "Atom URL login OPT : " + OTP;
+            emailService.sendEmail(email.getEmail(),subject, body);
             return;
         } catch (Exception e) {
             String message = e.getMessage();
@@ -64,7 +80,7 @@ public class AuthService {
          * - but this OTP verification is single point of failure
          * we have no backup from where we can validate the OTP
          *
-         * - so should we maintain a unordered map in memory so that we have a backup
+         * - so should we maintain an unordered map in memory so that we have a backup
          * but that will blot too much without clean up
          *
          * */
@@ -88,7 +104,8 @@ public class AuthService {
         }catch (Exception ignored) {}
 
         // TODO - generate real JWT token and return to the user
-        return "token";
+        User user = userService.checkAndSaveUser(email);
+        return jwtService.getJWTToken(user);
     }
 
 }
