@@ -110,4 +110,15 @@ public class GlobalExceptionHandler {
         ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
+    /**
+     * Handle IllegalArgumentException for auth provider
+     * @return a 400 status code with message = ex.getMessage()
+     * */
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex){
+        ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 }
