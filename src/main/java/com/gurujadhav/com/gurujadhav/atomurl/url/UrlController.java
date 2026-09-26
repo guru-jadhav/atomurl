@@ -27,8 +27,10 @@ public class UrlController {
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(longUrl)).build();
     }
 
-//    we need to protect this end point when user created with a user_id
-//    we need to validate if user is the user == user_id
+    // TODO : secure the endpoint - if user send email then check for token and match the email
+    //  we need to protect this end point when user created with a user_id
+    //  we need to validate if user is the user == user_id
+    //  we need to validate if user is the user == user_id
     @PostMapping("/api/urls")
     public ResponseEntity<ApiResponse<UrlResponse>> createShortUrl(@RequestBody Url url){
 
