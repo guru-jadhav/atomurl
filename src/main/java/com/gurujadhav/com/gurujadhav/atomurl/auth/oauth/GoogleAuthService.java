@@ -22,7 +22,8 @@ public class GoogleAuthService {
                 .queryParam("redirect_uri", googleRedirectUri)
                 .queryParam("response_type", "code")
                 .queryParam("scope", scope)
+                .encode()
                 .build()
-                .toString();
+                .toUriString();
     }
 }
