@@ -4,8 +4,10 @@ import com.gurujadhav.com.gurujadhav.atomurl.auth.InvalidOtpException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler providing centralized error handling across all controllers.
@@ -120,5 +122,27 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex){
         ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+    * Handle HTTP method not allowed exception explicitly as the global exception
+    * handleGenericException() will handle any type of exception - so the client get an
+    * internal server error instead of method not allowed message
+    * @return a 405 status with message = ex.getMessage()
+    * */
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex){
+        ApiResponse<Void> response = new ApiResponse<>(405, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
+
+    /**
+    * Handles 404 Not Found for missing endpoints or static resources
+    * @return a 404 status with message = ex.getMessage()
+    * */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(NoResourceFoundException ex){
+        ApiResponse<Void> response = new ApiResponse<>(404, ex.getMessage(), null);
+        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }

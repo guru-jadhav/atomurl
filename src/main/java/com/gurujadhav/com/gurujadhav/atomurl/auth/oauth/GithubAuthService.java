@@ -16,15 +16,16 @@ public class GithubAuthService {
     private String githubRedirectUri;
 
 
-    final private String baseGithubUrl = "https://github.com/login/oauth/authorize";
-    final private String scope = "read:user user:email";
-
     public String getGithubAuthorizationUrl() {
+        String baseGithubUrl = "https://github.com/login/oauth/authorize";
+        String scope = "read:user user:email";
+
         return UriComponentsBuilder.fromUriString(baseGithubUrl)
                 .queryParam("client_id", githubClientId)
                 .queryParam("redirect_uri", githubRedirectUri)
                 .queryParam("response_type", "code")
                 .queryParam("scope", scope)
+                .encode()
                 .build()
                 .toUriString();
     }
