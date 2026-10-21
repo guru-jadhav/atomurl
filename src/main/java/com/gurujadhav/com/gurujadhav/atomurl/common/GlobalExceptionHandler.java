@@ -1,6 +1,7 @@
 package com.gurujadhav.com.gurujadhav.atomurl.common;
 
 import com.gurujadhav.com.gurujadhav.atomurl.auth.InvalidOtpException;
+import com.gurujadhav.com.gurujadhav.atomurl.auth.oauth.OAuthAuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +11,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Global exception handler providing centralized error handling across all controllers.
- * Intercepts thrown exceptions and translates them into uniform {@link ApiResponse} payloads.
+ * Global exception handler providing centralized error handling across all
+ * controllers.
+ * Intercepts thrown exceptions and translates them into uniform
+ * {@link ApiResponse} payloads.
  */
 @Slf4j
 @RestControllerAdvice
@@ -19,13 +22,14 @@ public class GlobalExceptionHandler {
 
     /**
      * Fallback handler for unhandled or unexpected system exceptions.
-     * Logs full stack traces for debugging while obscuring internal system details from clients.
+     * Logs full stack traces for debugging while obscuring internal system details
+     * from clients.
      *
      * @param e the unexpected exception thrown during request processing
      * @return a 500 Internal Server Error wrapped in {@link ApiResponse}
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception e){
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception e) {
         log.error("Unhandled exception occurred during request processing:", e);
 
         ApiResponse<Void> response = new ApiResponse<>(500, "failure", null);
@@ -33,7 +37,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles type mismatches on request parameters (e.g., passing string text into a Date or Numeric parameter).
+     * Handles type mismatches on request parameters (e.g., passing string text into
+     * a Date or Numeric parameter).
      * Provides tailored guidance for common custom types such as LocalDate.
      *
      * @param ex the exception thrown when parameter conversion fails
@@ -41,12 +46,12 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(
-            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex){
-        String paramName = ex.getName();;
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        ;
         String message = "Invalid value for parameter '" + paramName + "'.";
 
-
-        if(ex.getRequiredType() != null && ex.getRequiredType().equals(java.time.LocalDate.class)){
+        if (ex.getRequiredType() != null && ex.getRequiredType().equals(java.time.LocalDate.class)) {
             message = "Invalid date format for '" + paramName + "'. Expected format is YYYY-MM-DD (e.g. 2026-08-30).";
         }
 
@@ -56,14 +61,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles Jakarta validation constraint failures on controller method parameters (e.g., @Min, @Max, @Pattern).
+     * Handles Jakarta validation constraint failures on controller method
+     * parameters (e.g., @Min, @Max, @Pattern).
      *
      * @param ex the constraint violation exception holding parameter error details
      * @return a 400 Bad Request returning the first failed constraint message
      */
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
-            jakarta.validation.ConstraintViolationException ex ) {
+            jakarta.validation.ConstraintViolationException ex) {
 
         String message = ex.getConstraintViolations().iterator().next().getMessage();
 
@@ -72,7 +78,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles missing or malformed JSON request bodies (e.g., empty body or syntax errors in JSON).
+     * Handles missing or malformed JSON request bodies (e.g., empty body or syntax
+     * errors in JSON).
      *
      * @param ex the exception thrown when the HTTP message cannot be read
      * @return a 400 Bad Request indicating the request body is missing or malformed
@@ -81,68 +88,82 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
 
-        ApiResponse<Void> response = new ApiResponse<>(400, "Required request body is missing or malformed JSON.", null);
+        ApiResponse<Void> response = new ApiResponse<>(400, "Required request body is missing or malformed JSON.",
+                null);
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(
-            org.springframework.web.bind.MethodArgumentNotValidException ex){
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().getFirst().getDefaultMessage();
         ApiResponse<Void> response = new ApiResponse<>(400, message, null);
-        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
-    * Handle RateLimitExceptions
-    * @return a 429 status code with message = ex.getMessage()
-    * */
+     * Handle RateLimitExceptions
+     * 
+     * @return a 429 status code with message = ex.getMessage()
+     */
     @ExceptionHandler(RateLimitException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRateLimit(RateLimitException ex){
+    public ResponseEntity<ApiResponse<Void>> handleRateLimit(RateLimitException ex) {
         ApiResponse<Void> response = new ApiResponse<>(429, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
     /**
-    * Handle InvalidOtpException for OTP login
-    * @return a 400 status code with message = ex.getMessage()
-    * */
+     * Handle InvalidOtpException for OTP login
+     * 
+     * @return a 400 status code with message = ex.getMessage()
+     */
     @ExceptionHandler(InvalidOtpException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidOtp(InvalidOtpException ex){
+    public ResponseEntity<ApiResponse<Void>> handleInvalidOtp(InvalidOtpException ex) {
         ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
      * Handle IllegalArgumentException for auth provider
+     * 
      * @return a 400 status code with message = ex.getMessage()
-     * */
+     */
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex){
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
         ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
-    * Handle HTTP method not allowed exception explicitly as the global exception
-    * handleGenericException() will handle any type of exception - so the client get an
-    * internal server error instead of method not allowed message
-    * @return a 405 status with message = ex.getMessage()
-    * */
+     * Handle HTTP method not allowed exception explicitly as the global exception
+     * handleGenericException() will handle any type of exception - so the client
+     * get an
+     * internal server error instead of method not allowed message
+     * 
+     * @return a 405 status with message = ex.getMessage()
+     */
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex){
+    public ResponseEntity<ApiResponse<Void>> handleHttpRequestMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex) {
         ApiResponse<Void> response = new ApiResponse<>(405, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
     }
 
     /**
-    * Handles 404 Not Found for missing endpoints or static resources
-    * @return a 404 status with message = ex.getMessage()
-    * */
+     * Handles 404 Not Found for missing endpoints or static resources
+     * 
+     * @return a 404 status with message = ex.getMessage()
+     */
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(NoResourceFoundException ex){
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(NoResourceFoundException ex) {
         ApiResponse<Void> response = new ApiResponse<>(404, ex.getMessage(), null);
-        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(OAuthAuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOAuthAuthenticationException(OAuthAuthenticationException ex) {
+        ApiResponse<Void> response = new ApiResponse<>(401, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }
