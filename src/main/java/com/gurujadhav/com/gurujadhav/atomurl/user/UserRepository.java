@@ -2,8 +2,6 @@ package com.gurujadhav.com.gurujadhav.atomurl.user;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,11 +13,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Transactional
     @Query(value = "INSERT INTO public.users " +
-            "       (email, signin_provider, last_login_date) values " +
-            "       (:email, :signin_provider, NOW()) " +
+            "       (email, name, signin_provider, last_login_date) values " +
+            "       (:email, :name, :signin_provider, NOW()) " +
             "       ON CONFLICT (email) " +
-            "       DO UPDATE SET last_login_date = NOW() " +
-            "       RETURNING *",
-            nativeQuery = true)
-    User upsertUser(@Param("email") String email, @Param("signin_provider") String signin_provider);
+            "       DO UPDATE SET last_login_date = NOW(), name = COALESCE(NULLIF(EXCLUDED.name, ''), users.name) " +
+            "       RETURNING *", nativeQuery = true)
+    User upsertUser(@Param("email") String email, @Param("name") String name,
+            @Param("signin_provider") String signin_provider);
 }

@@ -19,7 +19,7 @@ public class OAuthController {
 
     @GetMapping("/api/auth/oauth/{provider}/login")
     public ResponseEntity<ApiResponse<Void>> handleAuthLogin(
-            @PathVariable(value = "provider") String provider){
+            @PathVariable(value = "provider") String provider) {
 
         // Call auth service
         String providerAuthUrl = oAuthService.getAuthorizationUrl(provider);
@@ -29,14 +29,24 @@ public class OAuthController {
                 .build();
     }
 
-
     // TODO : if we successfully validate the user then we, can redirect them
-    //  to home "/" endpoint with a token
+    // to home "/" endpoint with a token
 
     @GetMapping("/api/auth/oauth/{provider}/callback")
     public ResponseEntity<ApiResponse<String>> handleCallback(
             @PathVariable("provider") String provider,
-            @RequestParam(value = "code") String code){
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String errorDescription) {
+
+        if (error != null) {
+            String message = (errorDescription != null) ? errorDescription : "OAuth access denied: " + error;
+            throw new OAuthAuthenticationException(message);
+        }
+
+        if (code == null || code.isBlank()) {
+            throw new OAuthAuthenticationException("Missing authorization code");
+        }
 
         String token = oAuthService.validateCode(provider, code);
         ApiResponse<String> response = new ApiResponse<>(200, "Authentication successful", token);
