@@ -1,9 +1,5 @@
 package com.gurujadhav.com.gurujadhav.atomurl.common;
 
-import com.gurujadhav.com.gurujadhav.atomurl.auth.InvalidOtpException;
-import com.gurujadhav.com.gurujadhav.atomurl.auth.oauth.OAuthAuthenticationException;
-import com.gurujadhav.com.gurujadhav.atomurl.jwt.InvalidTokenException;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -104,28 +100,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle RateLimitExceptions
-     * 
-     * @return a 429 status code with message = ex.getMessage()
-     */
-    @ExceptionHandler(RateLimitException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRateLimit(RateLimitException ex) {
-        ApiResponse<Void> response = new ApiResponse<>(429, ex.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
-    }
-
-    /**
-     * Handle InvalidOtpException for OTP login
-     * 
-     * @return a 400 status code with message = ex.getMessage()
-     */
-    @ExceptionHandler(InvalidOtpException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidOtp(InvalidOtpException ex) {
-        ApiResponse<Void> response = new ApiResponse<>(400, ex.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    /**
      * Handle IllegalArgumentException for auth provider
      * 
      * @return a 400 status code with message = ex.getMessage()
@@ -163,15 +137,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    @ExceptionHandler(OAuthAuthenticationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleOAuthAuthenticationException(OAuthAuthenticationException ex) {
-        ApiResponse<Void> response = new ApiResponse<>(401, ex.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidTokenException(InvalidTokenException ex) {
-        ApiResponse<Void> response = new ApiResponse<>(401, ex.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    @ExceptionHandler(BaseApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBaseApiException(BaseApiException ex) {
+        ApiResponse<Void> response = new ApiResponse<>(ex.getStatusCode().value(), ex.getMessage(), null);
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 }

@@ -1,8 +1,12 @@
 package com.gurujadhav.com.gurujadhav.atomurl.jwt;
 
-public class InvalidTokenException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.gurujadhav.com.gurujadhav.atomurl.common.BaseApiException;
+
+public class InvalidTokenException extends BaseApiException {
 
     public InvalidTokenException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED, message);
     }
 }

@@ -1,7 +1,9 @@
 package com.gurujadhav.com.gurujadhav.atomurl.common;
 
-public class RateLimitException extends RuntimeException  {
+import org.springframework.http.HttpStatus;
+
+public class RateLimitException extends BaseApiException {
     public RateLimitException(String message) {
-        super(message);
+        super(HttpStatus.TOO_MANY_REQUESTS, message);
     }
 }
