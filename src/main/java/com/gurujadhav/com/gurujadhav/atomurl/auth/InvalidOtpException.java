@@ -1,7 +1,10 @@
 package com.gurujadhav.com.gurujadhav.atomurl.auth;
 
-public class InvalidOtpException extends RuntimeException  {
+import com.gurujadhav.com.gurujadhav.atomurl.common.BaseApiException;
+import org.springframework.http.HttpStatus;
+
+public class InvalidOtpException extends BaseApiException {
     public InvalidOtpException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST, message);
     }
 }

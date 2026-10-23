@@ -1,13 +1,17 @@
 package com.gurujadhav.com.gurujadhav.atomurl.auth.oauth;
 
-public class OAuthAuthenticationException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.gurujadhav.com.gurujadhav.atomurl.common.BaseApiException;
+
+public class OAuthAuthenticationException extends BaseApiException {
 
     public OAuthAuthenticationException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED, message);
     }
 
     public OAuthAuthenticationException(String message, Throwable cause) {
-        super(message, cause);
+        super(HttpStatus.UNAUTHORIZED, message, cause);
     }
 
 }
