@@ -2,6 +2,8 @@ package com.gurujadhav.com.gurujadhav.atomurl.common;
 
 import com.gurujadhav.com.gurujadhav.atomurl.auth.InvalidOtpException;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.oauth.OAuthAuthenticationException;
+import com.gurujadhav.com.gurujadhav.atomurl.jwt.InvalidTokenException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -163,6 +165,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OAuthAuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleOAuthAuthenticationException(OAuthAuthenticationException ex) {
+        ApiResponse<Void> response = new ApiResponse<>(401, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidTokenException(InvalidTokenException ex) {
         ApiResponse<Void> response = new ApiResponse<>(401, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }

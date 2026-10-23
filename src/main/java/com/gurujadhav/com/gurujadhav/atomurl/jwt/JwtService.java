@@ -8,13 +8,15 @@ import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import io.jsonwebtoken.Jwts;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${jwt.secret}")
     private String secretKeyString;
 
     private SecretKey getSigningKey() {
@@ -26,7 +28,7 @@ public class JwtService {
         return TimeUnit.DAYS.toMillis(7);
     }
 
-    public String getJWTToken(User user){
+    public String getJWTToken(User user) {
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMS());
@@ -38,5 +40,41 @@ public class JwtService {
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public Claims extractAllClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidTokenException("Invalid or expired JWT token");
+        }
+    }
+
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        String subject = claims.getSubject();
+
+        if (subject == null || subject.isBlank()) {
+            throw new InvalidTokenException("Invalid or expired JWT token");
+        }
+
+        try {
+            return Long.parseLong(subject);
+        } catch (NumberFormatException e) {
+            throw new InvalidTokenException("Invalid or expired JWT token");
+        }
+    }
+
+    public Boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -32,4 +32,8 @@ public class UserService {
     public User checkAndSaveUser(UserAuthDTO userDto) {
         return userRepository.upsertUser(userDto.getEmail(), userDto.getName(), userDto.getProvider());
     }
+
+    public Optional<User> getUserById(Long userId) {
+        return userRepository.findById(userId);
+    }
 }
