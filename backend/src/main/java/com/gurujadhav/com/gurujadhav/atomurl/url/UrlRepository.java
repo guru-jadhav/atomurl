@@ -33,7 +33,8 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
             "       LEFT JOIN analytical a ON u.id = a.url_id " +
             "       WHERE u.user_id = :userId " +
             "       GROUP BY u.id, u.long_url, u.created_date " +
-            "       ORDER BY u.created_date DESC ",
+            "       ORDER BY u.created_date DESC " +
+            "       LIMIT :limit",
     nativeQuery = true )
-    List<UserUrlProjection> findUserUrlsWithClickCount(@Param ("userId") long userId);
+    List<UserUrlProjection> findUserUrlsWithClickCount(@Param("userId") long userId, @Param("limit") Integer limit);
 }
