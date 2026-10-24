@@ -2,6 +2,7 @@ package com.gurujadhav.com.gurujadhav.atomurl.auth.oauth;
 
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,10 @@ import java.net.URI;
 
 @RestController
 public class OAuthController {
+
+    @Value("${oauth.frontend-redirect-url:http://localhost:3000/auth/callback}")
+    private String frontendRedirectUrl;
+
 
     @Autowired
     OAuthService oAuthService;
@@ -33,7 +38,7 @@ public class OAuthController {
     // to home "/" endpoint with a token
 
     @GetMapping("/api/auth/oauth/{provider}/callback")
-    public ResponseEntity<ApiResponse<String>> handleCallback(
+    public ResponseEntity<Void> handleCallback(
             @PathVariable("provider") String provider,
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "error", required = false) String error,
@@ -49,9 +54,11 @@ public class OAuthController {
         }
 
         String token = oAuthService.validateCode(provider, code);
-        ApiResponse<String> response = new ApiResponse<>(200, "Authentication successful", token);
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        // ApiResponse<String> response = new ApiResponse<>(200, "Authentication successful", token);
+        
+        String redirectUrl = frontendRedirectUrl + "?token=" + token;
+        
+        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(redirectUrl)).build();
 
     }
 
