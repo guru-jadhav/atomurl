@@ -5,6 +5,7 @@ import com.gurujadhav.com.gurujadhav.atomurl.auth.EmailDto;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.OtpValidationDto;
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import com.gurujadhav.com.gurujadhav.atomurl.common.CurrentUser;
+import com.gurujadhav.com.gurujadhav.atomurl.common.RateLimit;
 
 import jakarta.validation.Valid;
 
@@ -29,7 +30,6 @@ public class UserController {
     @Autowired 
     AuthService authService;
     
-
     @GetMapping("/api/user/urls")
     public ResponseEntity<ApiResponse<List<UserUrlResponse>>> getUserUrls(
             @CurrentUser(required = true) User user) {
@@ -46,6 +46,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(responseData);
     }
 
+    @RateLimit(limit = 5, duration = 60, message = "Too many requests. Please try after 1 minute")
     @PatchMapping("/api/user/profile/update-name")
     public ResponseEntity<ApiResponse<User>> updateName(
         @CurrentUser(required = true) User user,
@@ -57,7 +58,9 @@ public class UserController {
         ApiResponse<User> responseData = new ApiResponse<>(200, "success", getUser);
         return ResponseEntity.status(HttpStatus.OK).body(responseData);
     }
-   
+    
+
+    @RateLimit(limit = 1, duration = 30, message = "OTP already sent")
     @PostMapping("/api/user/profile/email")
     public ResponseEntity<ApiResponse<Void>> updateProfile(
         @CurrentUser(required = true) User user,
@@ -84,6 +87,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(success);
     }
 
+    @RateLimit(limit = 5, duration = 60, message = "OTP Validation Limit Exceeded")
     @PostMapping("/api/user/profile/email/validate-otp")
     public ResponseEntity<ApiResponse<User>> validateEmailChangeOtp(
         @CurrentUser(required = true) User user,

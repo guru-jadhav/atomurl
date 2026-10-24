@@ -2,6 +2,7 @@ package com.gurujadhav.com.gurujadhav.atomurl.url;
 
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import com.gurujadhav.com.gurujadhav.atomurl.common.CurrentUser;
+import com.gurujadhav.com.gurujadhav.atomurl.common.RateLimit;
 import com.gurujadhav.com.gurujadhav.atomurl.user.User;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class UrlController {
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(longUrl)).build();
     }
 
+    @RateLimit(limit = 15, duration = 60, message = "Too many requests. Please try after 1 minute")
     @PostMapping("/api/urls")
     public ResponseEntity<ApiResponse<UrlResponse>> createShortUrl(
             @RequestBody Url url,
@@ -55,6 +57,7 @@ public class UrlController {
     }
 
 
+    @RateLimit(limit = 15, duration = 60, message = "Too many requests. Please try after 1 minute")
     @DeleteMapping("/api/urls/{shortcode}")
     public ResponseEntity<ApiResponse<Void>> deleteUrl(
             @PathVariable String shortcode,
