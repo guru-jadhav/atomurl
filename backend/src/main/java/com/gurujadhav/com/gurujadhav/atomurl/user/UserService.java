@@ -44,8 +44,8 @@ public class UserService {
         return userRepository.findById(userId);
     }
 
-    public List<UserUrlResponse> getUserUrls(Long userId) {
-        List<UserUrlProjection> response = urlRepository.findUserUrlsWithClickCount(userId);
+    public List<UserUrlResponse> getUserUrls(Long userId, Integer limit) {
+        List<UserUrlProjection> response = urlRepository.findUserUrlsWithClickCount(userId, limit);
 
         return response.stream()
                 .map(url -> new UserUrlResponse(
@@ -53,7 +53,7 @@ public class UserService {
                             url.getLongUrl(), 
                             url.getCreatedDate(), 
                             url.getTotalClicks() != null ? url.getTotalClicks() : 0L))
-                            .toList();
+                .toList();
     }
 
     public User updateEmail(User user, String newEmail){
