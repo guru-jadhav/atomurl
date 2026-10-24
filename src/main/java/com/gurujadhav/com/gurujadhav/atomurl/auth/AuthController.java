@@ -26,7 +26,7 @@ public class AuthController {
     @PostMapping("/api/auth/validate-otp")
     public ResponseEntity<ApiResponse<String>> validateOtp(@Valid @RequestBody OtpValidationDto otpValidation){
 
-        String token = authService.validateOtp(otpValidation);
+        String token = authService.validateOtpAndGetToken(otpValidation);
 
         ApiResponse<String> success = new ApiResponse<>(200, "OTP Validation Successfully", token);
         return ResponseEntity.status(HttpStatus.OK).body(success);

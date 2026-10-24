@@ -54,4 +54,16 @@ public class UrlController {
         }
     }
 
+
+    @DeleteMapping("/api/urls/{shortcode}")
+    public ResponseEntity<ApiResponse<Void>> deleteUrl(
+            @PathVariable String shortcode,
+            @CurrentUser(required = true) User user){
+        
+        urlService.deleteUrl(shortcode, user);
+
+        ApiResponse<Void> response = new ApiResponse<>(200, "Url deleted successfully", null);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
 }

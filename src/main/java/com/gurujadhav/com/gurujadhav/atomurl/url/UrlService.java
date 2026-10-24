@@ -2,9 +2,12 @@ package com.gurujadhav.com.gurujadhav.atomurl.url;
 
 import com.gurujadhav.cacheclient.CacheClient;
 import com.gurujadhav.com.gurujadhav.atomurl.analytical.AnalyticalRepository;
+import com.gurujadhav.com.gurujadhav.atomurl.common.BaseApiException;
+import com.gurujadhav.com.gurujadhav.atomurl.user.User;
 import com.gurujadhav.com.gurujadhav.atomurl.utils.Base62;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -82,6 +85,25 @@ public class UrlService {
             String msg = e.getMessage();
             log.info(msg);
             return null;
+        }
+    }
+
+    public void deleteUrl(String shortCode, User user) {
+        long urlId = Base62.decode(shortCode);
+        Url url = urlRepo.findById(urlId)
+                .orElseThrow(() -> new BaseApiException(HttpStatus.NOT_FOUND, "Url not found"));
+
+        User owner = url.getUser();
+
+        if (owner == null || !owner.getId().equals(user.getId())) {
+            throw new BaseApiException(HttpStatus.FORBIDDEN, "You don't have permission to delete this url");
+        }
+
+        urlRepo.delete(url);
+        try {
+            cache.DEL(0, shortCode);
+        } catch (Exception e) {
+            log.error("Cache delete failed : {} ", e.getMessage());
         }
     }
 }
