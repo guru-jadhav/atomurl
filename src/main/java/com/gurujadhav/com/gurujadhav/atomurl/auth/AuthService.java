@@ -2,7 +2,6 @@ package com.gurujadhav.com.gurujadhav.atomurl.auth;
 
 import com.gurujadhav.cacheclient.CacheClient;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.oauth.UserAuthDTO;
-import com.gurujadhav.com.gurujadhav.atomurl.common.RateLimitException;
 import com.gurujadhav.com.gurujadhav.atomurl.email.EmailService;
 import com.gurujadhav.com.gurujadhav.atomurl.jwt.JwtService;
 import com.gurujadhav.com.gurujadhav.atomurl.user.User;
@@ -30,23 +29,9 @@ public class AuthService {
     @Autowired
     JwtService jwtService;
 
+    
     // TODO - configure CacheCore DB[1] for default expiry time of 2 minutes
-    private boolean checkOtpAlreadySent(EmailDto email) {
-        try {
-            Optional<String> opt = cache.GET(1, email.getEmail(), String.class);
-            return opt.isPresent();
-        } catch (Exception ex) {
-            String message = ex.getMessage();
-            log.error("Error while getting OTP from cache : {}", message);
-            return false;
-        }
-    }
-
     public void sendOtp(EmailDto email) {
-
-        if (checkOtpAlreadySent(email)) {
-            throw new RateLimitException("OTP Already Sent, Please Try again later");
-        }
 
         String OTP = OTPGenerator.generateOTP();
         try {
