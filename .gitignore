@@ -35,3 +35,9 @@ build/
 # Environment & Secrets
 .env
 .env.*
+
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local

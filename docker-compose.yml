@@ -36,7 +36,7 @@ services:
 
   # 3. Spring Boot App (Used for Prod/Full Stack test only)
   app:
-    build: .   # Tells Docker to build your local Dockerfile
+    build: ./backend   # Tells Docker to build your local Dockerfile
     container_name: atomurl-app
     restart: always
     ports:
