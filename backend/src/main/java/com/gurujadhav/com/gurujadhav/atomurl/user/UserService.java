@@ -44,8 +44,8 @@ public class UserService {
         return userRepository.findById(userId);
     }
 
-    public List<UserUrlResponse> getUserUrls(Long userId, Integer limit, Long lastId) {
-        List<UserUrlProjection> response = urlRepository.findUserUrlsWithClickCount(userId, limit, lastId);
+    public List<UserUrlResponse> getUserUrls(Long userId, Integer limit, Long lastId, Long searchId, String pattern) {
+        List<UserUrlProjection> response = urlRepository.findUserUrlsWithClickCount(userId, limit, lastId, searchId, pattern);
 
         return response.stream()
                 .map(url -> new UserUrlResponse(

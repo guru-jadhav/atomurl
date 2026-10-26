@@ -39,12 +39,17 @@ public class UserController {
     public ResponseEntity<ApiResponse<List<UserUrlResponse>>> getUserUrls(
             @RequestParam(name = "after", required = false) String after,
             @RequestParam(name = "limit", required = false, defaultValue = "15") Integer limit,
+            @RequestParam(name = "query", required = false) String query,
             @CurrentUser(required = true) User user) {
         
         int safeLimit = (limit <= 0) ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
         Long lastId = Base62.decode(after);
+
+        boolean hasQuery = (query != null && !query.trim().isEmpty());
+        Long searchId = hasQuery ? Base62.decode(query.trim()) : null;
+        String pattern = hasQuery ? "%" + query.trim().toLowerCase() + "%" : null;
         
-        List<UserUrlResponse> responseData = userService.getUserUrls(user.getId(), safeLimit, lastId);
+        List<UserUrlResponse> responseData = userService.getUserUrls(user.getId(), safeLimit, lastId, searchId, pattern);
         ApiResponse<List<UserUrlResponse>> successResponse = new ApiResponse<>(200, "success", responseData);
         return ResponseEntity.status(HttpStatus.OK).body(successResponse);
     }

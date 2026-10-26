@@ -35,10 +35,11 @@ export const api = {
   deleteUrl: (shortCode) => apiFetch(`/api/urls/${shortCode}`, {
     method: 'DELETE'
   }),
-  getUserUrls: (limit = 15, after = null) => {
+  getUserUrls: (limit = 15, after = null, query = null) => {
     const params = new URLSearchParams();
     if (limit) params.set('limit', limit);
     if (after) params.set('after', after);
+    if (query && query.trim()) params.set('query', query.trim());
     const qs = params.toString();
     return apiFetch(qs ? `/api/user/urls?${qs}` : '/api/user/urls');
   },
