@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
 import { formatCompactNumber } from '../utils/formatters';
-import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer } from 'lucide-react';
+import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer, X } from 'lucide-react';
 
 const PAGE_SIZE = 15;
 
@@ -12,15 +12,23 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  // Initial fetch
-  const fetchInitialUrls = async () => {
+  // Fetch URLs for current debounced search query (or initial load)
+  const fetchUrls = useCallback(async (query) => {
     setLoading(true);
     try {
-      const res = await api.getUserUrls(PAGE_SIZE);
+      const res = await api.getUserUrls(PAGE_SIZE, null, query || null);
       const items = res?.data || [];
       setUrls(items);
       setHasMore(items.length >= PAGE_SIZE);
@@ -29,23 +37,22 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onShowToast]);
 
   useEffect(() => {
-    fetchInitialUrls();
-  }, []);
+    fetchUrls(debouncedSearch);
+  }, [debouncedSearch, fetchUrls]);
 
   // Fetch next page via keyset cursor (after)
   const fetchMoreUrls = useCallback(async () => {
     if (loading || loadingMore || !hasMore || urls.length === 0) return;
-    if (search.trim()) return; // Don't auto-paginate during client-side search filtering
 
     const lastItem = urls[urls.length - 1];
     if (!lastItem || !lastItem.shortCode) return;
 
     setLoadingMore(true);
     try {
-      const res = await api.getUserUrls(PAGE_SIZE, lastItem.shortCode);
+      const res = await api.getUserUrls(PAGE_SIZE, lastItem.shortCode, debouncedSearch || null);
       const newItems = res?.data || [];
       if (newItems.length > 0) {
         setUrls(prev => {
@@ -60,7 +67,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
     } finally {
       setLoadingMore(false);
     }
-  }, [loading, loadingMore, hasMore, urls, search, onShowToast]);
+  }, [loading, loadingMore, hasMore, urls, debouncedSearch, onShowToast]);
 
   // Stable ref for fetchMoreUrls to avoid recreating observer on every render
   const fetchMoreRef = useRef(fetchMoreUrls);
@@ -111,11 +118,6 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
     }
   };
 
-  const filteredUrls = urls.filter(u => 
-    u.shortCode.toLowerCase().includes(search.toLowerCase()) ||
-    u.longUrl.toLowerCase().includes(search.toLowerCase())
-  );
-
   const totalClicks = urls.reduce((acc, curr) => acc + (curr.totalClicks || 0), 0);
 
   return (
@@ -153,13 +155,40 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
           <input
             type="text"
             className="input-text"
-            placeholder="Search loaded links by short code or destination..."
+            placeholder="Search links by short code or destination..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: '38px' }}
+            style={{ paddingLeft: '38px', paddingRight: search ? '36px' : '16px' }}
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '4px',
+                borderRadius: '4px',
+                transition: 'color 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+              title="Clear search"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
-        <button className="btn btn-secondary btn-icon" onClick={fetchInitialUrls} title="Refresh">
+        <button className="btn btn-secondary btn-icon" onClick={() => fetchUrls(debouncedSearch)} title="Refresh">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
@@ -181,7 +210,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
             </div>
           ))}
         </div>
-      ) : filteredUrls.length === 0 ? (
+      ) : urls.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
           <Link2 size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
           <h3 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>No links found</h3>
@@ -191,7 +220,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {filteredUrls.map(item => (
+          {urls.map(item => (
             <div key={item.shortCode} className="card" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
               <div style={{ minWidth: '180px', flex: 1, maxWidth: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>

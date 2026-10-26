@@ -33,6 +33,7 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
             "       LEFT JOIN analytical a ON u.id = a.url_id " +
             "       WHERE u.user_id = :userId " +
             "       AND(:lastId IS NULL OR u.id < :lastId) " +
+            "       AND(:pattern IS NULL OR LOWER(u.long_url) LIKE :pattern OR (:searchId IS NOT NULL AND u.id = :searchId))" +
             "       GROUP BY u.id, u.long_url, u.created_date " +
             "       ORDER BY u.id DESC " +
             "       LIMIT :limit ",
@@ -40,5 +41,7 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
     List<UserUrlProjection> findUserUrlsWithClickCount(
         @Param("userId") long userId, 
         @Param("limit") Integer limit, 
-        @Param("lastId") Long lastId);
+        @Param("lastId") Long lastId,
+        @Param("searchId") Long searchId,
+        @Param("pattern") String pattern);
 }
