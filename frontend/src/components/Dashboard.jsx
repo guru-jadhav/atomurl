@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
+import { formatCompactNumber } from '../utils/formatters';
 import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer } from 'lucide-react';
+
+const PAGE_SIZE = 15;
 
 export default function Dashboard({ onShowToast, onViewAnalytics }) {
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const fetchUrls = async () => {
+
+  // Initial fetch
+  const fetchInitialUrls = async () => {
     setLoading(true);
     try {
-      const res = await api.getUserUrls();
-      setUrls(res.data || []);
+      const res = await api.getUserUrls(PAGE_SIZE);
+      const items = res?.data || [];
+      setUrls(items);
+      setHasMore(items.length >= PAGE_SIZE);
     } catch (err) {
       onShowToast(err.message || 'Failed to load URLs', 'error');
     } finally {
@@ -23,7 +32,60 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
   };
 
   useEffect(() => {
-    fetchUrls();
+    fetchInitialUrls();
+  }, []);
+
+  // Fetch next page via keyset cursor (after)
+  const fetchMoreUrls = useCallback(async () => {
+    if (loading || loadingMore || !hasMore || urls.length === 0) return;
+    if (search.trim()) return; // Don't auto-paginate during client-side search filtering
+
+    const lastItem = urls[urls.length - 1];
+    if (!lastItem || !lastItem.shortCode) return;
+
+    setLoadingMore(true);
+    try {
+      const res = await api.getUserUrls(PAGE_SIZE, lastItem.shortCode);
+      const newItems = res?.data || [];
+      if (newItems.length > 0) {
+        setUrls(prev => {
+          const existingCodes = new Set(prev.map(u => u.shortCode));
+          const uniqueItems = newItems.filter(u => !existingCodes.has(u.shortCode));
+          return [...prev, ...uniqueItems];
+        });
+      }
+      setHasMore(newItems.length >= PAGE_SIZE);
+    } catch (err) {
+      onShowToast(err.message || 'Failed to load more URLs', 'error');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loading, loadingMore, hasMore, urls, search, onShowToast]);
+
+  // Stable ref for fetchMoreUrls to avoid recreating observer on every render
+  const fetchMoreRef = useRef(fetchMoreUrls);
+  useEffect(() => {
+    fetchMoreRef.current = fetchMoreUrls;
+  });
+
+  // Callback ref: dynamically attaches IntersectionObserver the moment the sentinel DOM node renders
+  const observerRef = useRef(null);
+  const sentinelCallbackRef = useCallback((node) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    if (!node) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchMoreRef.current();
+        }
+      },
+      { rootMargin: '300px' }
+    );
+
+    observerRef.current.observe(node);
   }, []);
 
   const handleCopy = async (shortCode) => {
@@ -69,8 +131,8 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
           <div className="card" style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link2 size={18} style={{ color: 'var(--accent)' }} />
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Links</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{urls.length}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Loaded Links</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }} title={urls.length.toLocaleString()}>{formatCompactNumber(urls.length)}</div>
             </div>
           </div>
 
@@ -78,7 +140,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
             <MousePointer size={18} style={{ color: 'var(--success)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Clicks</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{totalClicks}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }} title={totalClicks.toLocaleString()}>{formatCompactNumber(totalClicks)}</div>
             </div>
           </div>
         </div>
@@ -91,18 +153,18 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
           <input
             type="text"
             className="input-text"
-            placeholder="Search by short code or destination..."
+            placeholder="Search loaded links by short code or destination..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: '38px' }}
           />
         </div>
-        <button className="btn btn-secondary btn-icon" onClick={fetchUrls} title="Refresh">
+        <button className="btn btn-secondary btn-icon" onClick={fetchInitialUrls} title="Refresh">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {/* URLs List */}
+      {/* Initial Loading Skeletons */}
       {loading && urls.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {[1, 2, 3].map((n) => (
@@ -124,14 +186,14 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
           <Link2 size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
           <h3 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>No links found</h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            {search ? 'No links match your search query.' : 'You haven\'t created any shortened links yet.'}
+            {search ? 'No links match your search query.' : "You haven't created any shortened links yet."}
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filteredUrls.map(item => (
             <div key={item.shortCode} className="card" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-              <div style={{ minWidth: '220px', flex: 1 }}>
+              <div style={{ minWidth: '180px', flex: 1, maxWidth: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                   <a
                     href={`${API_BASE}/${item.shortCode}`}
@@ -141,22 +203,36 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
                       fontFamily: 'var(--font-mono)',
                       fontWeight: 600,
                       color: 'var(--text-primary)',
-                      textDecoration: 'none'
+                      textDecoration: 'none',
+                      maxWidth: '180px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      verticalAlign: 'middle'
                     }}
+                    title={`/${item.shortCode}`}
                   >
                     /{item.shortCode}
                   </a>
-                  <span className="badge badge-accent">
-                    {item.totalClicks} clicks
+                  <span className="badge badge-accent" title={`${(item.totalClicks || 0).toLocaleString()} clicks`}>
+                    {formatCompactNumber(item.totalClicks)} {item.totalClicks === 1 ? 'click' : 'clicks'}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '480px' }}>
+                <div style={{
+                  fontSize: '0.825rem',
+                  color: 'var(--text-muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%'
+                }}>
                   {item.longUrl}
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                 <button
                   className="btn btn-secondary btn-icon"
                   onClick={() => handleCopy(item.shortCode)}
@@ -190,6 +266,35 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
               </div>
             </div>
           ))}
+
+          {/* Sentinel element for infinite scroll */}
+          <div ref={sentinelCallbackRef} style={{ height: '20px', margin: '6px 0' }} />
+
+          {/* Loading More Spinner Indicator */}
+          {loadingMore && (
+            <div
+              className="card"
+              style={{
+                padding: '12px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: 'var(--text-muted)',
+                fontSize: '0.85rem'
+              }}
+            >
+              <RefreshCw size={15} className="animate-spin" />
+              <span>Loading more links...</span>
+            </div>
+          )}
+
+          {/* End of list reached */}
+          {!hasMore && urls.length >= PAGE_SIZE && !search && (
+            <div style={{ textAlign: 'center', padding: '18px 0 6px 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              • You've reached the end of your links •
+            </div>
+          )}
         </div>
       )}
 

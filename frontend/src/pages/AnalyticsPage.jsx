@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
+import { formatCompactNumber } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { 
-  BarChart2, 
+  BarChart2,
+  ArrowRight, 
   Search, 
   Copy, 
   Check, 
@@ -17,7 +19,7 @@ import {
 } from 'lucide-react';
 
 
-export default function AnalyticsPage({ initialShortCode, onShowToast }) {
+export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDashboard }) {
   const { isAuthenticated } = useAuth();
   const [code, setCode] = useState(initialShortCode || '');
   const [searchedCode, setSearchedCode] = useState(initialShortCode || '');
@@ -204,30 +206,90 @@ export default function AnalyticsPage({ initialShortCode, onShowToast }) {
         {/* User's Links Quick Selector */}
         {isAuthenticated && userUrls.length > 0 && (
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Your Links (Select to View)
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Recent Links
+                </span>
+                <span className="badge badge-accent" style={{ fontSize: '0.7rem', padding: '1px 6px' }}>
+                  {userUrls.length}
+                </span>
+              </div>
+
+              {onViewDashboard && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={onViewDashboard}
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '2px 6px',
+                    color: 'var(--accent-text)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Browse and search all your links in Dashboard"
+                >
+                  <span>Browse all in Dashboard</span>
+                  <ArrowRight size={13} />
+                </button>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+
+            {/* Single-row swipeable/scrollable track */}
+            <div
+              className="recent-links-track"
+              style={{
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '8px',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
               {userUrls.map((item) => {
                 const isSelected = item.shortCode === searchedCode;
+                const formattedClicks = formatCompactNumber(item.totalClicks);
                 return (
                   <button
                     key={item.shortCode}
                     onClick={() => handleSelectLink(item.shortCode)}
                     className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
                     style={{
-                      padding: '5px 12px',
+                      padding: '5px 10px',
                       fontSize: '0.8rem',
-                      fontFamily: 'var(--font-mono)'
+                      fontFamily: 'var(--font-mono)',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      maxWidth: '160px'
                     }}
+                    title={`/${item.shortCode} (${(item.totalClicks || 0).toLocaleString()} clicks)`}
                   >
-                    /{item.shortCode}
+                    <span style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '85px'
+                    }}>
+                      /{item.shortCode}
+                    </span>
                     <span style={{
                       opacity: isSelected ? 0.9 : 0.6,
-                      fontSize: '0.75rem',
-                      marginLeft: '6px'
+                      fontSize: '0.725rem',
+                      flexShrink: 0
                     }}>
-                      ({item.totalClicks || 0})
+                      ({formattedClicks})
                     </span>
                   </button>
                 );
@@ -245,11 +307,22 @@ export default function AnalyticsPage({ initialShortCode, onShowToast }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
+                  <span style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--accent)',
+                    maxWidth: '260px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                    verticalAlign: 'middle'
+                  }} title={`/${searchedCode}`}>
                     /{searchedCode}
                   </span>
-                  <span className="badge badge-accent">
-                    {totalClicks} {totalClicks === 1 ? 'click' : 'clicks'} (30d)
+                  <span className="badge badge-accent" title={`${totalClicks.toLocaleString()} clicks (30d)`}>
+                    {formatCompactNumber(totalClicks)} {totalClicks === 1 ? 'click' : 'clicks'} (30d)
                   </span>
                 </div>
                 {matchedUserUrl && (

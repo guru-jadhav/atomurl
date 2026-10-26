@@ -434,6 +434,9 @@ code, .font-mono {
     border-radius: var(--radius-lg);
     flex-wrap: wrap;
     row-gap: 8px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transform: translateZ(0);
   }
   .nav-brand {
     order: 1;
@@ -534,4 +537,78 @@ code, .font-mono {
 @keyframes shimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
+}
+
+
+/* ==========================================================================
+   Universal Custom Scrollbar (All screens, OSs & themes)
+   ========================================================================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Recent Links Horizontal Track */
+.recent-links-track {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.recent-links-track::-webkit-scrollbar {
+  height: 4px;
+}
+
+.recent-links-track::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0 4px;
+}
+
+.recent-links-track::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.recent-links-track::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-hover);
+}
+
+.recent-links-track::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Text Truncation Utility */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

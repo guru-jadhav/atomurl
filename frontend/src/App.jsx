@@ -115,6 +115,7 @@ export default function App() {
               <AnalyticsPage
                 initialShortCode={analyticsCode}
                 onShowToast={showToast}
+                onViewDashboard={() => setActiveTab('dashboard')}
               />
             )}
           </div>

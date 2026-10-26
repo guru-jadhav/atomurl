@@ -20,7 +20,12 @@ public class Base62 {
         return sb.reverse().toString();
     }
 
-    public static long decode(String shortCode){
+    public static Long decode(String shortCode){
+
+        if(shortCode == null || shortCode.isBlank()){
+            return null;
+        }
+
         long number = 0;
         for(int i = 0; i < shortCode.length(); i++){
             char c = shortCode.charAt(i);
