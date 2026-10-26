@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { api } from '../api/client';
+import { api, API_BASE } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { X, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 
-export default function AuthModal({ onClose, onShowToast }) {
+export default function AuthModal({ onClose, onSuccess, onShowToast }) {
   const { loginWithToken } = useAuth();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -13,7 +13,7 @@ export default function AuthModal({ onClose, onShowToast }) {
 
   const handleOAuthLogin = (provider) => {
     // Navigates browser to Spring Boot OAuth endpoint
-    window.location.href = `http://localhost:8080/api/auth/oauth/${provider}/login`;
+    window.location.href = `${API_BASE}/api/auth/oauth/${provider}/login`;
   };
 
   const handleSendOtp = async (e) => {
@@ -48,6 +48,7 @@ export default function AuthModal({ onClose, onShowToast }) {
       const res = await api.validateOtp(email.trim(), otp.trim());
       loginWithToken(res.data);
       onShowToast('Successfully signed in!');
+      if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
       onShowToast(err.message || 'Invalid verification code', 'error');

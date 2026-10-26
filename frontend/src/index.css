@@ -4,37 +4,37 @@
   --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Dark Theme (Comfortable high-readability dark) */
-  --bg-primary: #0a0b10;
-  --bg-secondary: #121520;
-  --bg-surface: #171b28;
-  --bg-subtle: #212638;
-  --border: #2c334b;
-  --border-hover: #434c6e;
-  --border-focus: #6366f1;
+  /* Dark Theme (Warm Stone #1B1917 - Comfortable, organic, non-glare dark) */
+  --bg-primary: #1B1917;      /* Tailwind Stone 900 base */
+  --bg-surface: #23201D;      /* Slightly elevated warm stone card/modal surface */
+  --bg-secondary: #292522;    /* Inputs, mini-charts, inner tracks */
+  --bg-subtle: #332E2A;       /* Hover states, subtle buttons */
+  --border: #3D3732;          /* Distinct warm stone border */
+  --border-hover: #574F47;    /* Stone hover border */
+  --border-focus: #818cf8;    /* Focused indigo highlight */
 
-  --text-primary: #f8fafc;
-  --text-secondary: #c2c7d9;
-  --text-muted: #8b93ab;
+  --text-primary: #FAFAF9;    /* Stone 50 clean warm white */
+  --text-secondary: #D6D3D1;  /* Stone 300 warm readable light grey */
+  --text-muted: #A8A29E;      /* Stone 400 legible muted labels */
 
   --accent: #6366f1;
   --accent-hover: #4f46e5;
-  --accent-light: rgba(99, 102, 241, 0.15);
-  --accent-text: #818cf8;
+  --accent-light: rgba(99, 102, 241, 0.16);
+  --accent-text: #a5b4fc;
 
   --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.15);
-  --danger: #ef4444;
-  --danger-light: rgba(239, 68, 68, 0.15);
+  --success-light: rgba(16, 185, 129, 0.16);
+  --danger: #f87171;
+  --danger-light: rgba(239, 68, 68, 0.16);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.55);
+  --shadow-sm: 0 1px 3px rgba(15, 13, 11, 0.4);
+  --shadow-md: 0 4px 16px rgba(15, 13, 11, 0.5);
+  --shadow-lg: 0 12px 28px -4px rgba(15, 13, 11, 0.65);
 }
 
 [data-theme="light"] {
@@ -144,7 +144,7 @@ code, .font-mono {
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: var(--bg-subtle);
+  background-color: var(--bg-secondary);
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
@@ -170,16 +170,57 @@ code, .font-mono {
 }
 
 .nav-pill-btn.active {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-subtle);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hover);
   box-shadow: var(--shadow-sm);
+  font-weight: 600;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-user-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nav-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  max-width: 170px;
+  min-width: 0;
+}
+
+.nav-user-icon {
+  flex-shrink: 0;
+}
+
+.nav-user-name {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+  vertical-align: middle;
+}
+
+@media (max-width: 860px) {
+  .nav-user-btn {
+    max-width: 130px;
+    padding: 6px 10px;
+  }
+  .nav-user-name {
+    max-width: 80px;
+  }
 }
 
 /* Buttons */
@@ -386,16 +427,69 @@ code, .font-mono {
   .navbar-wrapper {
     top: 8px;
     padding: 0 8px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
   .navbar {
-    padding: 6px 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-lg);
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .nav-brand {
+    order: 1;
+  }
+  .nav-actions {
+    order: 2;
+    gap: 6px;
   }
   .nav-pill-group {
-    display: none; /* Collapses on mobile or handles via pill menu */
+    order: 3;
+    display: flex;
+    width: 100%;
+    margin-top: 2px;
+    padding: 3px;
+    justify-content: stretch;
+  }
+  .nav-pill-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 4px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .nav-pill-btn svg {
+    width: 14px;
+    height: 14px;
   }
   .app-container {
     padding: 0 16px;
+  }
+  .nav-user-btn {
+    max-width: 110px;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+  .nav-user-name {
+    max-width: 68px;
+  }
+}
+
+@media (max-width: 400px) {
+  .navbar {
+    padding: 6px 8px;
+  }
+  .nav-user-btn {
+    max-width: 90px;
+    padding: 5px 6px;
+  }
+  .nav-user-name {
+    max-width: 50px;
+  }
+  .nav-brand span {
+    font-size: 1.05rem;
+  }
+  .nav-pill-btn span {
+    font-size: 0.75rem;
   }
 }
 

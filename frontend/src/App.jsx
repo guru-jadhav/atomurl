@@ -8,13 +8,41 @@ import AuthModal from './components/AuthModal';
 import AuthCallback from './pages/AuthCallback';
 import { useAuth } from './context/AuthContext';
 
+const LAST_SCREEN_KEY = 'atom_last_screen';
+const VALID_TABS = ['shortener', 'dashboard', 'analytics'];
+
 export default function App() {
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState('shortener');
+  
+  // Initialize from localStorage if valid; fallback to 'shortener'
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem(LAST_SCREEN_KEY);
+    if (saved && VALID_TABS.includes(saved)) {
+      return saved;
+    }
+    return 'shortener';
+  });
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [analyticsCode, setAnalyticsCode] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // Persist activeTab to localStorage
+  useEffect(() => {
+    if (activeTab && VALID_TABS.includes(activeTab)) {
+      localStorage.setItem(LAST_SCREEN_KEY, activeTab);
+    }
+  }, [activeTab]);
+
+  // Resolve target tab after login: saved last screen or default to 'dashboard'
+  const resolvePostLoginScreen = () => {
+    const saved = localStorage.getItem(LAST_SCREEN_KEY);
+    if (saved && VALID_TABS.includes(saved)) {
+      return saved;
+    }
+    return 'dashboard';
+  };
 
   // Manage auth callback mode in state so it cleanly unmounts after token extraction
   const [isAuthCallback, setIsAuthCallback] = useState(() => 
@@ -32,7 +60,8 @@ export default function App() {
     window.history.replaceState({}, document.title, '/');
     setIsAuthCallback(false);
     showToast(msg, type);
-    setActiveTab('dashboard');
+    const targetScreen = resolvePostLoginScreen();
+    setActiveTab(targetScreen);
   };
 
   return (
@@ -94,7 +123,14 @@ export default function App() {
 
       {/* Floating Modals */}
       {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} onShowToast={showToast} />
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            const targetScreen = resolvePostLoginScreen();
+            setActiveTab(targetScreen);
+          }}
+          onShowToast={showToast}
+        />
       )}
 
       {showProfileModal && (

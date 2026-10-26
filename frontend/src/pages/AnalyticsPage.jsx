@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../api/client';
+import { api, API_BASE } from '../api/client';
+import { copyToClipboard } from '../utils/clipboard';
 import { useAuth } from '../context/AuthContext';
 import { 
   BarChart2, 
@@ -15,7 +16,6 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export default function AnalyticsPage({ initialShortCode, onShowToast }) {
   const { isAuthenticated } = useAuth();
@@ -106,13 +106,17 @@ export default function AnalyticsPage({ initialShortCode, onShowToast }) {
     fetchAnalytics(itemCode);
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (!searchedCode) return;
     const fullUrl = `${API_BASE}/${searchedCode}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopied(true);
-    onShowToast('Short link copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
+    const ok = await copyToClipboard(fullUrl);
+    if (ok) {
+      setCopied(true);
+      onShowToast('Short link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      onShowToast('Failed to copy link', 'error');
+    }
   };
 
   // Metrics calculations

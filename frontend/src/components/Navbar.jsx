@@ -58,14 +58,16 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAuth, onOpenProf
 
           {/* User Auth */}
           {isAuthenticated ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="nav-user-container">
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary nav-user-btn"
                 onClick={onOpenProfile}
-                style={{ padding: '6px 12px' }}
+                title={user?.name || user?.email || 'Account'}
               >
-                <User size={15} />
-                <span>{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
+                <User size={15} className="nav-user-icon" />
+                <span className="nav-user-name">
+                  {user?.name || user?.email?.split('@')[0] || 'Account'}
+                </span>
               </button>
               <button
                 className="btn btn-ghost btn-icon"
