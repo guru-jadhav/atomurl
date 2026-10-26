@@ -1,16 +1,51 @@
-# React + Vite
+# atomURL Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Single Page Application for atomURL built with React 19, Vite, and plain CSS.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Styling**: Vanilla CSS (custom properties, no heavy UI library)
+- **Icons**: Lucide React
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Dashboard**: Lists user links with infinite scrolling (keyset cursor pagination via `IntersectionObserver`).
+- **Analytics**: 30-day click breakdown chart with daily inspection pills and a link switcher.
+- **Authentication**: Modal supporting email OTP verification and Google/GitHub OAuth.
+- **Theming**: Dark and light modes with custom scrollbars and responsive layout for mobile.
+- **Clipboard Helper**: Copies links reliably across both HTTPS and insecure local/mobile hotspot connections.
 
-## Expanding the Oxlint configuration
+## Directory Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```text
+src/
+├── api/             # API client (client.js)
+├── components/      # UI components (Navbar, Dashboard, Hero, Modals)
+├── context/         # AuthContext (user session & theme state)
+├── pages/           # AnalyticsPage, AuthCallback
+├── utils/           # clipboard and number formatting helpers
+├── App.jsx          # Root application and route handling
+└── index.css        # Global CSS variables and styles
+```
+
+## Running Locally
+
+Install dependencies:
+```bash
+npm install
+```
+
+Start the Vite dev server:
+```bash
+npm run dev
+```
+Runs at `http://localhost:3000`.
+
+### Scripts
+
+- `npm run dev`: Start local dev server
+- `npm run build`: Build for production into `dist/`
+- `npm run preview`: Preview the production build
+- `npm run lint`: Run Oxlint
