@@ -6,6 +6,7 @@ import com.gurujadhav.com.gurujadhav.atomurl.auth.OtpValidationDto;
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
 import com.gurujadhav.com.gurujadhav.atomurl.common.CurrentUser;
 import com.gurujadhav.com.gurujadhav.atomurl.common.RateLimit;
+import com.gurujadhav.com.gurujadhav.atomurl.utils.Base62;
 
 import jakarta.validation.Valid;
 
@@ -30,13 +31,20 @@ public class UserController {
 
     @Autowired 
     AuthService authService;
+
+    private static  final int DEFAULT_LIMIT = 15;
+    private static final int MAX_LIMIT = 100;
     
     @GetMapping("/api/user/urls")
     public ResponseEntity<ApiResponse<List<UserUrlResponse>>> getUserUrls(
-            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "after", required = false) String after,
+            @RequestParam(name = "limit", required = false, defaultValue = "15") Integer limit,
             @CurrentUser(required = true) User user) {
-
-        List<UserUrlResponse> responseData = userService.getUserUrls(user.getId(), limit);
+        
+        int safeLimit = (limit <= 0) ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
+        Long lastId = Base62.decode(after);
+        
+        List<UserUrlResponse> responseData = userService.getUserUrls(user.getId(), safeLimit, lastId);
         ApiResponse<List<UserUrlResponse>> successResponse = new ApiResponse<>(200, "success", responseData);
         return ResponseEntity.status(HttpStatus.OK).body(successResponse);
     }

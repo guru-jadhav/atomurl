@@ -86,7 +86,17 @@ export default function ProfileModal({ onClose, onShowToast }) {
         <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>Email</span>
-            <span style={{ fontWeight: 500 }}>{user?.email}</span>
+            <span style={{
+              fontWeight: 500,
+              maxWidth: '220px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block',
+              verticalAlign: 'middle'
+            }} title={user?.email}>
+              {user?.email}
+            </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>Provider</span>

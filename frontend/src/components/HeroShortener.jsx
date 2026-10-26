@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
+import { formatCompactNumber } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { Link2, Copy, Check, ExternalLink, ArrowRight, Clock, ShieldCheck, BarChart2, Zap } from 'lucide-react';
 
@@ -247,7 +248,19 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
                 href={`${API_BASE}/${recentLink.shortCode}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  color: 'var(--accent)',
+                  textDecoration: 'none',
+                  maxWidth: '160px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}
+                title={`/${recentLink.shortCode}`}
               >
                 /{recentLink.shortCode}
               </a>
@@ -272,8 +285,8 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
                   <span style={{
                     fontWeight: 700,
                     color: hoveredDay.clicks > 0 ? 'var(--accent)' : 'var(--text-muted)'
-                  }}>
-                    {hoveredDay.clicks} {hoveredDay.clicks === 1 ? 'click' : 'clicks'}
+                  }} title={`${(hoveredDay.clicks || 0).toLocaleString()} clicks`}>
+                    {formatCompactNumber(hoveredDay.clicks)} {hoveredDay.clicks === 1 ? 'click' : 'clicks'}
                   </span>
                 </div>
               )}
