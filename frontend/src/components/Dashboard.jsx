@@ -1,6 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 import React, { useState, useEffect } from 'react';
-import { api } from '../api/client';
+import { api, API_BASE } from '../api/client';
+import { copyToClipboard } from '../utils/clipboard';
 import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer } from 'lucide-react';
 
 export default function Dashboard({ onShowToast, onViewAnalytics }) {
@@ -26,12 +26,16 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
     fetchUrls();
   }, []);
 
-  const handleCopy = (shortCode) => {
+  const handleCopy = async (shortCode) => {
     const fullUrl = `${API_BASE}/${shortCode}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedCode(shortCode);
-    onShowToast('Copied short link!');
-    setTimeout(() => setCopiedCode(null), 2000);
+    const ok = await copyToClipboard(fullUrl);
+    if (ok) {
+      setCopiedCode(shortCode);
+      onShowToast('Copied short link!');
+      setTimeout(() => setCopiedCode(null), 2000);
+    } else {
+      onShowToast('Failed to copy link', 'error');
+    }
   };
 
   const handleDelete = async (shortCode) => {

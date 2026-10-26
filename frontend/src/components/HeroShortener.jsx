@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../api/client';
+import { api, API_BASE } from '../api/client';
+import { copyToClipboard } from '../utils/clipboard';
 import { useAuth } from '../context/AuthContext';
 import { Link2, Copy, Check, ExternalLink, ArrowRight, Clock, ShieldCheck, BarChart2, Zap } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalytics }) {
   const { isAuthenticated } = useAuth();
@@ -108,12 +108,16 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!result?.shortUrl) return;
-    navigator.clipboard.writeText(result.shortUrl);
-    setCopied(true);
-    onShowToast('Copied short link to clipboard!');
-    setTimeout(() => setCopied(false), 2000);
+    const ok = await copyToClipboard(result.shortUrl);
+    if (ok) {
+      setCopied(true);
+      onShowToast('Copied short link to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      onShowToast('Failed to copy to clipboard', 'error');
+    }
   };
 
   return (
@@ -298,7 +302,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
           ) : (
             <div>
               <div
-                onClick={() => onViewAnalytics && onViewAnalytics(recentLink.shortCode)}
+                onMouseLeave={() => setHoveredDay(null)}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-end',
@@ -308,10 +312,9 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
                   background: 'var(--bg-secondary)',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border)',
-                  cursor: 'pointer',
+                  cursor: 'default',
                   position: 'relative'
                 }}
-                title="Click to view full analytics breakdown"
               >
                 {(() => {
                   const max = Math.max(...recentStats.map(r => r.clicks || 0), 1);
@@ -327,6 +330,9 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
                         key={idx}
                         onMouseEnter={(e) => {
                           e.stopPropagation();
+                          setHoveredDay(s);
+                        }}
+                        onTouchStart={() => {
                           setHoveredDay(s);
                         }}
                         style={{
