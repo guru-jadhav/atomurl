@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
-import { formatCompactNumber } from '../utils/formatters';
+import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
 import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer, X } from 'lucide-react';
 
 const PAGE_SIZE = 15;
@@ -254,9 +254,24 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
-                  {item.longUrl}
+                  {getFaviconUrl(item.longUrl) && (
+                    <img
+                      src={getFaviconUrl(item.longUrl)}
+                      alt=""
+                      width={14}
+                      height={14}
+                      style={{ borderRadius: '2px', flexShrink: 0 }}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.longUrl}
+                  </span>
                 </div>
               </div>
 

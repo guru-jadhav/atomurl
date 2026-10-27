@@ -20,6 +20,26 @@ public class UrlController {
     @Autowired
     private UrlService urlService;
 
+    private static final String SCHEME_REGEX = "^[a-zA-Z][a-zA-Z0-9+.-]*://\\S+$";
+
+    private boolean isValidScheme(String longUrl){
+        if(longUrl == null || longUrl.isBlank()){
+            return false;
+        }
+
+        String trimmed = longUrl.trim();
+        if(!trimmed.matches(SCHEME_REGEX)){
+            return false;
+        }
+
+        try{
+            URI uri = URI.create(trimmed);
+            return uri.getScheme() != null && !uri.getScheme().isBlank();
+        } catch (Exception e){
+            return false;
+        }
+    }
+
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> reDirectController(@PathVariable String shortCode) {
         String longUrl = urlService.resolveShortCode(shortCode);
@@ -43,6 +63,14 @@ public class UrlController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
+
+        if (!isValidScheme(url.getLongUrl())) {
+            ApiResponse<UrlResponse> errorResponse = new ApiResponse<>(422,
+                    "Invalid URL: URL must include a valid protocol scheme (e.g. https://example.com or test://example.com)", null);
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(errorResponse);
+        }
+
+        url.setLongUrl(url.getLongUrl().trim());
         url.setUser(user);
 
         UrlResponse responseData = urlService.createNewShortUrl(url);

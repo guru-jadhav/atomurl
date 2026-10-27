@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
-import { formatCompactNumber } from '../utils/formatters';
+import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { 
   BarChart2,
@@ -326,8 +326,19 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
                   </span>
                 </div>
                 {matchedUserUrl && (
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '6px', wordBreak: 'break-all' }}>
-                    Points to: <span style={{ color: 'var(--text-primary)' }}>{matchedUserUrl.longUrl}</span>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '6px', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span>Points to:</span>
+                    {getFaviconUrl(matchedUserUrl.longUrl) && (
+                      <img
+                        src={getFaviconUrl(matchedUserUrl.longUrl)}
+                        alt=""
+                        width={14}
+                        height={14}
+                        style={{ borderRadius: '2px', flexShrink: 0 }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    )}
+                    <span style={{ color: 'var(--text-primary)' }}>{matchedUserUrl.longUrl}</span>
                   </div>
                 )}
               </div>
