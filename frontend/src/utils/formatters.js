@@ -25,3 +25,18 @@ export function formatCompactNumber(num) {
   const val = (n / 1_000_000_000_000).toFixed(n >= 10_000_000_000_000 ? 0 : 1).replace(/\.0$/, '');
   return `${val}T+`;
 }
+
+export function getDomain(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname;
+  } catch {
+    return null;
+  }
+}
+
+export function getFaviconUrl(url) {
+  const domain = getDomain(url);
+  return domain ? `https://icons.duckduckgo.com/ip3/${domain}.ico` : null;
+}

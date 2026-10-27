@@ -4,6 +4,8 @@ import HeroShortener from './components/HeroShortener';
 import Dashboard from './components/Dashboard';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ProfileModal from './components/ProfileModal';
+import Footer from './components/Footer';
+import AboutModal from './components/AboutModal';
 import AuthModal from './components/AuthModal';
 import AuthCallback from './pages/AuthCallback';
 import { useAuth } from './context/AuthContext';
@@ -25,6 +27,7 @@ export default function App() {
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [analyticsCode, setAnalyticsCode] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -65,7 +68,7 @@ export default function App() {
   };
 
   return (
-    <div>
+    <div className="app-layout">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -73,7 +76,7 @@ export default function App() {
         onOpenProfile={() => setShowProfileModal(true)}
       />
 
-      <main className="app-container">
+      <main className="app-container" style={{ flex: 1 }}>
         {isAuthCallback ? (
           <AuthCallback onFinish={handleCallbackFinish} />
         ) : (
@@ -122,6 +125,8 @@ export default function App() {
         )}
       </main>
 
+      <Footer onOpenAbout={() => setShowAboutModal(true)} />
+
       {/* Floating Modals */}
       {showAuthModal && (
         <AuthModal
@@ -136,6 +141,10 @@ export default function App() {
 
       {showProfileModal && (
         <ProfileModal onClose={() => setShowProfileModal(false)} onShowToast={showToast} />
+      )}
+
+      {showAboutModal && (
+        <AboutModal onClose={() => setShowAboutModal(false)} onShowToast={showToast} />
       )}
 
 

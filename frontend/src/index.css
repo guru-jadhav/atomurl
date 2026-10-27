@@ -71,13 +71,29 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -96,8 +112,10 @@ code, .font-mono {
 /* Layout */
 .app-container {
   max-width: 1040px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 24px;
+  flex: 1 0 auto;
 }
 
 /* Navbar */
@@ -611,4 +629,80 @@ code, .font-mono {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* App Footer (Sticky to bottom) */
+.app-footer {
+  margin-top: auto;
+  width: 100%;
+  padding-top: 48px;
+  padding-bottom: 24px;
+  background: transparent;
+}
+
+.app-footer-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 24px 0 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.app-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.app-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-footer-btn,
+.app-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.app-footer-btn:hover,
+.app-footer-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+}
+
+@media (max-width: 520px) {
+  .app-footer {
+    padding-top: 36px;
+    padding-bottom: 16px;
+  }
+  .app-footer-inner {
+    padding: 14px 16px 0 16px;
+  }
+  .app-footer-right {
+    gap: 8px;
+  }
+  .footer-link-label {
+    display: none;
+  }
+  .app-footer-btn,
+  .app-footer-link {
+    padding: 6px;
+  }
 }

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
-import { formatCompactNumber } from '../utils/formatters';
+import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
+
+const SCHEME_REGEX = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/\S+$/;
 import { useAuth } from '../context/AuthContext';
 import { Link2, Copy, Check, ExternalLink, ArrowRight, Clock, ShieldCheck, BarChart2, Zap } from 'lucide-react';
 
@@ -12,6 +14,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [urlError, setUrlError] = useState('');
 
   // Recent link analytics state
   const [recentLink, setRecentLink] = useState(null);
@@ -78,13 +81,16 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!longUrl.trim()) return;
+    const target = longUrl.trim();
+    if (!target) return;
 
-    let target = longUrl.trim();
-    if (!/^https?:\/\//i.test(target)) {
-      target = 'https://' + target;
+    // Validate scheme in UI without prepending anything
+    if (!SCHEME_REGEX.test(target)) {
+      setUrlError('Invalid URL: please include a valid scheme (e.g. https://example.com or test://example.com)');
+      return;
     }
 
+    setUrlError('');
     setLoading(true);
     try {
       const res = await api.createShortUrl(target);
@@ -102,8 +108,9 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
       // Refresh recent link analytics
       fetchRecentAnalytics();
     } catch (err) {
-      // Keep input text field unchanged on failure
-      onShowToast(err.message || 'Failed to shorten URL', 'error');
+      const errorMsg = err.data?.message || err.message || 'Failed to shorten URL';
+      setUrlError(errorMsg);
+      onShowToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -140,8 +147,14 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
               className="input-text"
               placeholder="Paste long link here (e.g. https://my-portfolio.com)..."
               value={longUrl}
-              onChange={(e) => setLongUrl(e.target.value)}
-              style={{ paddingLeft: '42px' }}
+              onChange={(e) => {
+                setLongUrl(e.target.value);
+                if (urlError) setUrlError('');
+              }}
+              style={{
+                paddingLeft: '42px',
+                borderColor: urlError ? 'var(--danger)' : undefined
+              }}
             />
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading || !longUrl.trim()}>
@@ -153,6 +166,11 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
             )}
           </button>
         </form>
+        {urlError && (
+          <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '10px', textAlign: 'left', paddingLeft: '4px' }}>
+            {urlError}
+          </div>
+        )}
       </div>
 
       {/* Result Card */}
@@ -222,8 +240,19 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
             </div>
           </div>
 
-          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Points to: <span style={{ color: 'var(--text-secondary)' }}>{result.longUrl}</span>
+          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>Points to:</span>
+            {getFaviconUrl(result.longUrl) && (
+              <img
+                src={getFaviconUrl(result.longUrl)}
+                alt=""
+                width={14}
+                height={14}
+                style={{ borderRadius: '2px', flexShrink: 0 }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            )}
+            <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{result.longUrl}</span>
           </div>
         </div>
       )}
@@ -304,7 +333,20 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
           </div>
 
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Points to: <span style={{ color: 'var(--text-secondary)' }}>{recentLink.longUrl}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span>Points to:</span>
+              {getFaviconUrl(recentLink.longUrl) && (
+                <img
+                  src={getFaviconUrl(recentLink.longUrl)}
+                  alt=""
+                  width={14}
+                  height={14}
+                  style={{ borderRadius: '2px', flexShrink: 0 }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
+              <span style={{ color: 'var(--text-secondary)' }}>{recentLink.longUrl}</span>
+            </span>
           </div>
 
           {/* Mini Interactive 30-Day Activity Chart */}

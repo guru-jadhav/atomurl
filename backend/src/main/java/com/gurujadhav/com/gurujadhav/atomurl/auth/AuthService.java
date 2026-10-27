@@ -30,16 +30,15 @@ public class AuthService {
     JwtService jwtService;
 
     
-    // TODO - configure CacheCore DB[1] for default expiry time of 2 minutes
+    // Note: CacheCore DB[1] is configured with a default expiry of 5 minutes for OTPs
+    // (DB[0] is used for hot URLs, DB[1] for OTPs, and DB[2] for rate limiting)
     public void sendOtp(EmailDto email) {
 
         String OTP = OTPGenerator.generateOTP();
         try {
             cache.SET(1, email.getEmail(), OTP);
-            // we need to call the email service here
-            String subject = "ATOM URL";
-            String body = "Atom URL login OPT : " + OTP;
-            emailService.sendEmail(email.getEmail(), subject, body);
+            // Send branded HTML & text OTP email with quick-action card support
+            emailService.sendOtpEmail(email.getEmail(), OTP);
             return;
         } catch (Exception e) {
             String message = e.getMessage();

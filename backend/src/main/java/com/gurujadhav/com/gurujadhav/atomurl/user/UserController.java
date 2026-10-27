@@ -34,6 +34,24 @@ public class UserController {
 
     private static  final int DEFAULT_LIMIT = 15;
     private static final int MAX_LIMIT = 100;
+
+    private String removeOtherChars(String query){
+        if(query == null || query.isEmpty()){
+            return query;
+        }
+
+        StringBuilder filtered = new StringBuilder();
+
+        for(int i = 0; i < query.length(); i++){
+            char c = query.charAt(i);
+            
+            if( c >= '0' && c <= '9' || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
+                filtered.append(c);
+            }
+        }
+
+        return filtered.toString();
+    }
     
     @GetMapping("/api/user/urls")
     public ResponseEntity<ApiResponse<List<UserUrlResponse>>> getUserUrls(
@@ -44,9 +62,10 @@ public class UserController {
         
         int safeLimit = (limit <= 0) ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
         Long lastId = Base62.decode(after);
+        String filteredQuery = removeOtherChars(query);
 
         boolean hasQuery = (query != null && !query.trim().isEmpty());
-        Long searchId = hasQuery ? Base62.decode(query.trim()) : null;
+        Long searchId = hasQuery && filteredQuery.length() <= 10 ? Base62.decode(filteredQuery.trim()) : null;
         String pattern = hasQuery ? "%" + query.trim().toLowerCase() + "%" : null;
         
         List<UserUrlResponse> responseData = userService.getUserUrls(user.getId(), safeLimit, lastId, searchId, pattern);

@@ -37,15 +37,16 @@ public class UrlService {
     }
 
     private Optional<Url> fetchFromDB(String shortCode){
-        long id = Base62.decode(shortCode);
+        Long id = Base62.decode(shortCode);
+        if(id == null) return Optional.empty();
         return urlRepo.findById(id);
     }
 
     private void recordRedirect(String shortCode){
-        long urlId = Base62.decode(shortCode);
-        LocalDate accessDate = LocalDate.now();
+        Long urlId = Base62.decode(shortCode);
+        if(urlId == null) return;
 
-        // query to update analytical tables
+        LocalDate accessDate = LocalDate.now();
         analyticalRepository.incrementClickCount(urlId, accessDate);
     }
 
@@ -89,7 +90,10 @@ public class UrlService {
     }
 
     public void deleteUrl(String shortCode, User user) {
-        long urlId = Base62.decode(shortCode);
+        Long urlId = Base62.decode(shortCode);
+        if (urlId == null) {
+            throw new BaseApiException(HttpStatus.NOT_FOUND, "Url not found");
+        }
         Url url = urlRepo.findById(urlId)
                 .orElseThrow(() -> new BaseApiException(HttpStatus.NOT_FOUND, "Url not found"));
 

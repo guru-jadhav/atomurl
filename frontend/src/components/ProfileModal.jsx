@@ -167,6 +167,14 @@ export default function ProfileModal({ onClose, onShowToast }) {
             Email managed by {user?.signinProvider} SSO (cannot be edited).
           </div>
         )}
+
+        {/* Support Contact */}
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <span>Need help or support?</span>
+          <a href="mailto:atomurl.app@gmail.com" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
+            atomurl.app@gmail.com
+          </a>
+        </div>
       </div>
     </div>
   );
