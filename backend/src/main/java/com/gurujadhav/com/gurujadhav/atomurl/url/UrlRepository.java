@@ -44,4 +44,7 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
         @Param("lastId") Long lastId,
         @Param("searchId") Long searchId,
         @Param("pattern") String pattern);
+
+    @Query(value = "SELECT COUNT(*) FROM urls WHERE created_date = :today", nativeQuery = true)
+    long getTodayUrlsCount(@Param("today") LocalDate today);
 }

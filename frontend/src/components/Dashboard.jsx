@@ -301,7 +301,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
                   <ExternalLink size={15} />
                 </a>
                 <button
-                  className="btn btn-danger btn-icon"
+                  className="btn btn-secondary btn-icon"
                   onClick={() => setDeleteConfirm(item.shortCode)}
                   title="Delete Link"
                 >
@@ -345,14 +345,42 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="modal-backdrop" onClick={() => setDeleteConfirm(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ padding: '24px' }}>
-            <h3 style={{ marginBottom: '8px', color: 'var(--danger)' }}>Delete Short Link?</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ padding: '24px', maxWidth: '420px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--radius-full)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Trash2 size={18} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600 }}>Delete Short Link?</h3>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5', margin: '0 0 24px 0' }}>
               Are you sure you want to delete <strong>/{deleteConfirm}</strong>? This action will permanently disable the link and remove all its click analytics.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => handleDelete(deleteConfirm)}>Delete Link</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={() => handleDelete(deleteConfirm)}
+              >
+                Delete Link
+              </button>
             </div>
           </div>
         </div>

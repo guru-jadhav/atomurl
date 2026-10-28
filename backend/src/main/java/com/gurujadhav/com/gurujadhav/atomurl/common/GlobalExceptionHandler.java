@@ -1,6 +1,8 @@
 package com.gurujadhav.com.gurujadhav.atomurl.common;
 
 import lombok.extern.slf4j.Slf4j;
+import com.gurujadhav.com.gurujadhav.atomurl.admin.ErrorRingBuffer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -18,6 +20,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @Autowired(required = false)
+    private ErrorRingBuffer errorRingBuffer;
+
     /**
      * Fallback handler for unhandled or unexpected system exceptions.
      * Logs full stack traces for debugging while obscuring internal system details
@@ -29,7 +34,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception e) {
         log.error("Unhandled exception occurred during request processing:", e);
-
+        if (errorRingBuffer != null) {
+            errorRingBuffer.record("SPRING_SYSTEM", e.getClass().getSimpleName() + ": " + (e.getMessage() != null ? e.getMessage() : "Unknown"), e.toString());
+        }
         ApiResponse<Void> response = new ApiResponse<>(500, "failure", null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

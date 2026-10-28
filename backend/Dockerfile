@@ -1,3 +1,11 @@
+# --- Production Logging Tip ---
+# In production / Docker Compose, cap log storage to 10MB to prevent filling up the VM disk:
+# logging:
+#   driver: "json-file"
+#   options:
+#     max-size: "10m"
+#     max-file: "3"
+
 # --- Stage 1: Build stage ---
 # Uses a Maven image with JDK 25 to compile the project
 FROM maven:3.9-eclipse-temurin-25 AS builder
