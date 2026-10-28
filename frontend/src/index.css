@@ -75,6 +75,10 @@ html, body {
   height: 100%;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 #root {
   min-height: 100%;
   display: flex;
@@ -130,10 +134,9 @@ code, .font-mono {
 }
 
 .navbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
   width: 100%;
   max-width: 860px;
   padding: 8px 16px;
@@ -156,6 +159,7 @@ code, .font-mono {
   font-size: 1.15rem;
   color: var(--text-primary);
   letter-spacing: -0.03em;
+  justify-self: start;
 }
 
 .nav-pill-group {
@@ -166,6 +170,7 @@ code, .font-mono {
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
+  justify-self: center;
 }
 
 .nav-pill-btn {
@@ -176,11 +181,12 @@ code, .font-mono {
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: var(--radius-full);
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
 }
 
 .nav-pill-btn:hover {
@@ -190,9 +196,9 @@ code, .font-mono {
 .nav-pill-btn.active {
   background-color: var(--bg-subtle);
   color: var(--text-primary);
-  border: 1px solid var(--border-hover);
+  border-color: var(--border-hover);
   box-shadow: var(--shadow-sm);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .nav-actions {
@@ -200,6 +206,7 @@ code, .font-mono {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  justify-self: end;
 }
 
 .nav-user-container {
@@ -441,42 +448,46 @@ code, .font-mono {
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .navbar-wrapper {
     top: 8px;
-    padding: 0 8px;
-    margin-bottom: 20px;
+    padding: 0 12px;
+    margin-bottom: 24px;
   }
   .navbar {
-    padding: 8px 12px;
-    border-radius: var(--radius-lg);
+    display: flex;
     flex-wrap: wrap;
-    row-gap: 8px;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    transform: translateZ(0);
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    row-gap: 10px;
   }
   .nav-brand {
     order: 1;
+    justify-self: auto;
   }
   .nav-actions {
     order: 2;
-    gap: 6px;
+    justify-self: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .nav-pill-group {
     order: 3;
     display: flex;
     width: 100%;
-    margin-top: 2px;
-    padding: 3px;
-    justify-content: stretch;
+    margin-top: 4px;
+    padding: 4px;
+    justify-self: auto;
   }
   .nav-pill-btn {
     flex: 1;
     justify-content: center;
-    padding: 6px 4px;
-    font-size: 0.8rem;
-    gap: 4px;
+    padding: 7px 6px;
+    font-size: 0.825rem;
+    gap: 5px;
   }
   .nav-pill-btn svg {
     width: 14px;
@@ -486,31 +497,39 @@ code, .font-mono {
     padding: 0 16px;
   }
   .nav-user-btn {
-    max-width: 110px;
+    max-width: 120px;
     padding: 5px 8px;
     font-size: 0.8rem;
   }
   .nav-user-name {
-    max-width: 68px;
+    max-width: 75px;
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 420px) {
   .navbar {
-    padding: 6px 8px;
-  }
-  .nav-user-btn {
-    max-width: 90px;
-    padding: 5px 6px;
-  }
-  .nav-user-name {
-    max-width: 50px;
+    padding: 8px 10px;
+    row-gap: 8px;
   }
   .nav-brand span {
     font-size: 1.05rem;
   }
-  .nav-pill-btn span {
-    font-size: 0.75rem;
+  .nav-user-btn {
+    max-width: 95px;
+    padding: 5px 6px;
+    font-size: 0.775rem;
+  }
+  .nav-user-name {
+    max-width: 55px;
+  }
+  .nav-pill-btn {
+    padding: 6px 3px;
+    font-size: 0.775rem;
+    gap: 4px;
+  }
+  .nav-pill-btn svg {
+    width: 13px;
+    height: 13px;
   }
 }
 
@@ -525,18 +544,15 @@ code, .font-mono {
 
 /* Page Transition & Skeleton */
 .page-fade-in {
-  animation: pageFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
+  animation: pageFadeIn 0.15s ease-out forwards;
 }
 
 @keyframes pageFadeIn {
   from {
-    opacity: 0;
-    transform: translateY(5px);
+    opacity: 0.4;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

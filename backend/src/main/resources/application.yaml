@@ -13,7 +13,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate   # Flyway creates the tables, Hibernate validates them
-    show-sql: true
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -21,9 +21,9 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
-
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:atomurl.app@gmail.com}
     properties:
       mail:
         smtp:
@@ -32,24 +32,30 @@ spring:
             enable: ${MAIL_SMTP_STARTTLS:false}
 
 cachecore:
-    domain: ${CACHECORE_DOMAIN:localhost}
-    port: ${CACHECORE_PORT:6948}
+  domain: ${CACHECORE_DOMAIN:${CACHECORE_HOST:localhost}}
+  port: ${CACHECORE_PORT:6948}
 
 jwt:
-  secret: ${JWT_SECRET:dummy-jwt-secret-key-must-be-at-least-32-bytes-long}
+  secret: ${JWT_SECRET:dev-jwt-secret-key-must-be-at-least-32-bytes-long}
 
 oauth:
+  frontend-redirect-url: ${FRONTEND_REDIRECT_URL:http://localhost:3000/auth/callback}
   github:
-    client-id: ${GITHUB_CLIENT_ID:dummy-github-client-id}
-    client-secret: ${GITHUB_CLIENT_SECRET:dummy-github-client-secret}
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
     redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/auth/oauth/github/callback}
 
   google:
-    client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
-    client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
     redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/auth/oauth/google/callback}
-  
-    frontend-redirect-url: ${FRONTEND_REDIRECT_URL:http://localhost:3000/auth/callback}
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+logging:
+  level:
+    root: INFO
+    com.gurujadhav.atomurl: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN

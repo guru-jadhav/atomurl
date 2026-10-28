@@ -22,10 +22,10 @@ public class GithubAuthService {
     }
 
     // TODO : need to create actual credentials for Github auth
-    @Value("${oauth.github.client-id:dummy-github-client-id}")
+    @Value("${oauth.github.client-id:}")
     private String githubClientId;
 
-    @Value("${oauth.github.client-secret:dummy-github-client-secret}")
+    @Value("${oauth.github.client-secret:}")
     private String githubClientSecret;
 
     @Value("${oauth.github.redirect-uri:http://localhost:8080/api/auth/oauth/github/callback}")
@@ -62,6 +62,9 @@ public class GithubAuthService {
     }
 
     public String getGithubAuthorizationUrl() {
+        if (githubClientId == null || githubClientId.isBlank()) {
+            throw new OAuthAuthenticationException("GitHub OAuth is not configured on this server");
+        }
         String baseGithubUrl = "https://github.com/login/oauth/authorize";
         String scope = "read:user user:email";
 

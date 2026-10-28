@@ -16,7 +16,7 @@ import io.jsonwebtoken.Jwts;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:dev-jwt-secret-key-must-be-at-least-32-bytes-long}")
     private String secretKeyString;
 
     private SecretKey getSigningKey() {

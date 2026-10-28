@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CacheConfig {
 
-    @Value("${cachecore.domain}")
+    @Value("${cachecore.domain:localhost}")
     String domain;
 
-    @Value("${cachecore.port}")
+    @Value("${cachecore.port:6948}")
     int port;
 
     private static final int MAX_RETRIES = 10;
