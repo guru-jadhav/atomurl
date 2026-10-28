@@ -43,7 +43,9 @@ services:
       - "8080:8080"
     environment:
       DB_HOST: db
+      CACHECORE_DOMAIN: cachecore
       CACHECORE_HOST: cachecore
+      CACHECORE_PORT: 6948
     depends_on:
       db:
         condition: service_healthy

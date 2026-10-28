@@ -29,6 +29,7 @@ export default function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [analyticsCode, setAnalyticsCode] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState(null);
 
   // Persist activeTab to localStorage
@@ -80,21 +81,22 @@ export default function App() {
         {isAuthCallback ? (
           <AuthCallback onFinish={handleCallbackFinish} />
         ) : (
-          <div key={activeTab} className="page-fade-in">
-            {activeTab === 'shortener' && (
+          <>
+            <div style={{ display: activeTab === 'shortener' ? 'block' : 'none' }}>
               <HeroShortener
                 onShowToast={showToast}
-                onUrlCreated={() => {}}
+                onUrlCreated={() => setRefreshKey(prev => prev + 1)}
                 onViewAnalytics={(code) => {
                   setAnalyticsCode(code);
                   setActiveTab('analytics');
                 }}
               />
-            )}
+            </div>
 
-            {activeTab === 'dashboard' && (
-              isAuthenticated ? (
+            <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}>
+              {isAuthenticated ? (
                 <Dashboard
+                  key={refreshKey}
                   onShowToast={showToast}
                   onViewAnalytics={(code) => {
                     setAnalyticsCode(code);
@@ -111,17 +113,17 @@ export default function App() {
                     Sign In
                   </button>
                 </div>
-              )
-            )}
+              )}
+            </div>
 
-            {activeTab === 'analytics' && (
+            <div style={{ display: activeTab === 'analytics' ? 'block' : 'none' }}>
               <AnalyticsPage
                 initialShortCode={analyticsCode}
                 onShowToast={showToast}
                 onViewDashboard={() => setActiveTab('dashboard')}
               />
-            )}
-          </div>
+            </div>
+          </>
         )}
       </main>
 

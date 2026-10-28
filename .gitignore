@@ -35,6 +35,7 @@ build/
 # Environment & Secrets
 .env
 .env.*
+!.env.example
 
 # Frontend
 node_modules/

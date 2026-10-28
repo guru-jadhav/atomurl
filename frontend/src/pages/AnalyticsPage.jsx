@@ -300,7 +300,7 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
       </div>
 
       {/* Analytics Content */}
-      {searchedCode && (
+      {searchedCode ? (
         <div>
           {/* Active Link Banner */}
           <div className="card" style={{ padding: '20px', marginBottom: '20px', background: 'var(--bg-secondary)' }}>
@@ -588,6 +588,46 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
               </div>
             )}
           </div>
+        </div>
+      ) : (loadingUrls || loading) ? (
+        /* Stable Height Skeleton Placeholder during initial link load */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Active Link Banner Skeleton */}
+          <div className="card" style={{ padding: '20px', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+              <div className="skeleton" style={{ width: '120px', height: '24px' }} />
+              <div className="skeleton" style={{ width: '280px', height: '14px' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="skeleton" style={{ width: '70px', height: '34px', borderRadius: 'var(--radius-md)' }} />
+              <div className="skeleton" style={{ width: '34px', height: '34px', borderRadius: 'var(--radius-md)' }} />
+            </div>
+          </div>
+
+          {/* 3 Metric Cards Skeletons */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            {[1, 2, 3].map(n => (
+              <div key={n} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="skeleton" style={{ width: '90px', height: '12px' }} />
+                <div className="skeleton" style={{ width: '60px', height: '28px' }} />
+                <div className="skeleton" style={{ width: '130px', height: '12px' }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Chart Skeleton */}
+          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="skeleton" style={{ width: '140px', height: '18px' }} />
+            <div className="skeleton" style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-md)' }} />
+          </div>
+        </div>
+      ) : (
+        <div className="card" style={{ textAlign: 'center', padding: '48px', marginTop: '12px' }}>
+          <BarChart2 size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>No link selected</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+            Enter a short code above or select one from your recent links to inspect click analytics.
+          </p>
         </div>
       )}
     </div>

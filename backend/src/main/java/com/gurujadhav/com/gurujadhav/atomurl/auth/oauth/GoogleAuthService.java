@@ -19,10 +19,10 @@ public class GoogleAuthService {
     }
 
     // TODO : need to create actual credentials for Google auth
-    @Value("${oauth.google.client-id:dummy-google-client-id}")
+    @Value("${oauth.google.client-id:}")
     private String googleClientId;
 
-    @Value("${oauth.google.client-secret:dummy-google-client-secret}")
+    @Value("${oauth.google.client-secret:}")
     private String googleClientSecret;
 
     @Value("${oauth.google.redirect-uri:http://localhost:8080/api/auth/oauth/google/callback}")
@@ -31,6 +31,9 @@ public class GoogleAuthService {
     private final RestClient restClient = RestClient.create();
 
     public String getGoogleAuthorizationUrl() {
+        if (googleClientId == null || googleClientId.isBlank()) {
+            throw new OAuthAuthenticationException("Google OAuth is not configured on this server");
+        }
         String baseGoogleUrl = "https://accounts.google.com/o/oauth2/v2/auth";
         String scope = "openid email profile";
         return UriComponentsBuilder.fromUriString(baseGoogleUrl)
