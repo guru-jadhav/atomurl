@@ -69,5 +69,19 @@ export const api = {
   validateEmailChangeOtp: (email, otp) => apiFetch('/api/user/profile/email/validate-otp', {
     method: 'POST',
     body: JSON.stringify({ email, otp })
+  }),
+
+  // Admin APIs
+  getAdminOverview: () => apiFetch('/api/admin/overview'),
+  getAdminUsers: (query = '', page = 0, size = 20) => {
+    const params = new URLSearchParams();
+    if (query && query.trim()) params.set('query', query.trim());
+    params.set('page', page);
+    params.set('size', size);
+    return apiFetch(`/api/admin/users?${params.toString()}`);
+  },
+  getAdminErrors: () => apiFetch('/api/admin/errors'),
+  clearAdminErrors: () => apiFetch('/api/admin/errors', {
+    method: 'DELETE'
   })
 };

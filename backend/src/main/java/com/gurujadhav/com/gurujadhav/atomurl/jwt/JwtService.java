@@ -1,6 +1,8 @@
 package com.gurujadhav.com.gurujadhav.atomurl.jwt;
 
 import com.gurujadhav.com.gurujadhav.atomurl.user.User;
+import com.gurujadhav.com.gurujadhav.atomurl.admin.AdminService;
+import org.springframework.beans.factory.annotation.Autowired;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ public class JwtService {
     @Value("${jwt.secret:dev-jwt-secret-key-must-be-at-least-32-bytes-long}")
     private String secretKeyString;
 
+    @Autowired
+    private AdminService adminService;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = secretKeyString.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -33,9 +38,11 @@ public class JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMS());
 
+        boolean isAdmin = adminService.isAdmin(user.getEmail());
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
+                .claim("isAdmin", isAdmin)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())

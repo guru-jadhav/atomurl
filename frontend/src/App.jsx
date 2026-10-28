@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import HeroShortener from './components/HeroShortener';
 import Dashboard from './components/Dashboard';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AdminPage from './pages/AdminPage';
 import ProfileModal from './components/ProfileModal';
 import Footer from './components/Footer';
 import AboutModal from './components/AboutModal';
@@ -11,10 +12,10 @@ import AuthCallback from './pages/AuthCallback';
 import { useAuth } from './context/AuthContext';
 
 const LAST_SCREEN_KEY = 'atom_last_screen';
-const VALID_TABS = ['shortener', 'dashboard', 'analytics'];
+const VALID_TABS = ['shortener', 'dashboard', 'analytics', 'admin'];
 
 export default function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   // Initialize from localStorage if valid; fallback to 'shortener'
   const [activeTab, setActiveTab] = useState(() => {
@@ -122,6 +123,19 @@ export default function App() {
                 onShowToast={showToast}
                 onViewDashboard={() => setActiveTab('dashboard')}
               />
+            </div>
+
+            <div style={{ display: activeTab === 'admin' ? 'block' : 'none' }}>
+              {user?.isAdmin ? (
+                <AdminPage onShowToast={showToast} />
+              ) : (
+                <div className="card" style={{ textAlign: 'center', padding: '64px', maxWidth: '480px', margin: '48px auto' }}>
+                  <h3 style={{ marginBottom: '8px' }}>Access Denied</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Administrator privileges required to access the admin console.
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}

@@ -51,6 +51,11 @@ services:
         condition: service_healthy
       cachecore:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 
 
   mailpit:
       image: axllent/mailpit:latest

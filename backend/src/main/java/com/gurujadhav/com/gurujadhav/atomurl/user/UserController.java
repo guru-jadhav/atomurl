@@ -1,6 +1,7 @@
 package com.gurujadhav.com.gurujadhav.atomurl.user;
 
 import com.gurujadhav.com.gurujadhav.atomurl.auth.AuthService;
+import com.gurujadhav.com.gurujadhav.atomurl.admin.AdminService;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.EmailDto;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.OtpValidationDto;
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
@@ -31,6 +32,9 @@ public class UserController {
 
     @Autowired 
     AuthService authService;
+
+    @Autowired 
+    AdminService adminService;
 
     private static  final int DEFAULT_LIMIT = 15;
     private static final int MAX_LIMIT = 100;
@@ -74,9 +78,17 @@ public class UserController {
     }
 
     @GetMapping("/api/user/profile")
-    public ResponseEntity<ApiResponse<User>> getUserProfile( @CurrentUser(required = true) User user){
-
-        ApiResponse<User> responseData = new ApiResponse<>(200, "success", user);
+    public ResponseEntity<ApiResponse<UserProfileDto>> getUserProfile(@CurrentUser(required = true) User user){
+        boolean isAdmin = adminService.isAdmin(user.getEmail());
+        UserProfileDto dto = new UserProfileDto(
+            user.getId(),
+            user.getEmail(),
+            user.getName(),
+            user.getSigninProvider(),
+            user.getLastLoginDate(),
+            isAdmin
+        );
+        ApiResponse<UserProfileDto> responseData = new ApiResponse<>(200, "success", dto);
         return ResponseEntity.status(HttpStatus.OK).body(responseData);
     }
 

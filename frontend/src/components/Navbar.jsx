@@ -1,10 +1,11 @@
 import AtomLogo from "./AtomLogo";
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sun, Moon, Link2, BarChart2, LayoutDashboard, User, LogIn, LogOut } from 'lucide-react';
+import { Sun, Moon, Link2, BarChart2, LayoutDashboard, User, LogIn, LogOut, ShieldCheck } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenAuth, onOpenProfile }) {
   const { theme, toggleTheme, user, isAuthenticated, logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <header className="navbar-wrapper">
@@ -42,6 +43,16 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAuth, onOpenProf
             <BarChart2 size={15} />
             <span>Analytics</span>
           </button>
+
+          {user?.isAdmin && (
+            <button
+              className={`nav-pill-btn ${activeTab === 'admin' ? 'active' : ''}`}
+              onClick={() => setActiveTab('admin')}
+            >
+              <ShieldCheck size={15} />
+              <span>Admin</span>
+            </button>
+          )}
         </div>
 
         {/* Right: Actions */}
@@ -71,7 +82,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAuth, onOpenProf
               </button>
               <button
                 className="btn btn-ghost btn-icon"
-                onClick={logout}
+                onClick={() => setShowLogoutConfirm(true)}
                 title="Log Out"
               >
                 <LogOut size={16} />
@@ -85,6 +96,56 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAuth, onOpenProf
           )}
         </div>
       </nav>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="modal-backdrop" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ padding: '24px', maxWidth: '400px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--radius-full)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <LogOut size={18} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600 }}>Sign Out of atomURL?</h3>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5', margin: '0 0 24px 0' }}>
+              Are you sure you want to sign out of your account?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  logout();
+                  if (activeTab === 'dashboard' || activeTab === 'admin') {
+                    setActiveTab('shortener');
+                  }
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -34,4 +34,10 @@ public interface AnalyticalRepository extends JpaRepository<Analytical, Analytic
         nativeQuery = true)
     int deleteAnalyticsBatch(@Param("cutoffDate") LocalDate cutoffDate, @Param("batchSize") int batchSize);
 
+
+    @Query(value = "SELECT COALESCE(SUM(access_count), 0) FROM analytical", nativeQuery = true)
+    long getTotalPlatformClicks();
+
+    @Query(value = "SELECT COALESCE(SUM(access_count), 0) FROM analytical WHERE access_date = :today", nativeQuery = true)
+    long getTodayPlatformClicks(@Param("today") LocalDate today);
 }

@@ -22,7 +22,7 @@ public class CacheConfig {
 
     @Bean(destroyMethod = "close")
     public CacheClient getCacheClient() {
-        CacheClient client = new CacheClient(domain, port);
+        CacheClient client = new ResilientCacheClient(domain, port);
 
         for(int i = 1; i <= MAX_RETRIES; i++){
             try{
