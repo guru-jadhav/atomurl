@@ -39,14 +39,32 @@ public class JwtService {
         Date expiryDate = new Date(now.getTime() + expirationMS());
 
         boolean isAdmin = adminService.isAdmin(user.getEmail());
+        int tokenVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 1;
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("isAdmin", isAdmin)
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public Integer extractTokenVersion(String token) {
+        Claims claims = extractAllClaims(token);
+        Object versionObj = claims.get("tokenVersion");
+        if (versionObj == null) {
+            return null;
+        }
+        if (versionObj instanceof Number) {
+            return ((Number) versionObj).intValue();
+        }
+        try {
+            return Integer.parseInt(versionObj.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public Claims extractAllClaims(String token) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
 import HeroShortener from './components/HeroShortener';
 import Dashboard from './components/Dashboard';
@@ -9,17 +9,33 @@ import Footer from './components/Footer';
 import AboutModal from './components/AboutModal';
 import AuthModal from './components/AuthModal';
 import AuthCallback from './pages/AuthCallback';
-import { useAuth } from './context/AuthContext';
+import { useAuth, isTokenExpired, getJwtPayload } from './context/AuthContext';
+import { RefreshCw } from 'lucide-react';
 
 const LAST_SCREEN_KEY = 'atom_last_screen';
 const VALID_TABS = ['shortener', 'dashboard', 'analytics', 'admin'];
 
 export default function App() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading, token } = useAuth();
   
-  // Initialize from localStorage if valid; fallback to 'shortener'
+  // Initialize from localStorage if valid; fallback to 'shortener' for guests
   const [activeTab, setActiveTab] = useState(() => {
+    const storedToken = localStorage.getItem('atom_token');
+    const hasValidToken = storedToken && !isTokenExpired(storedToken);
     const saved = localStorage.getItem(LAST_SCREEN_KEY);
+
+    if (!hasValidToken && (saved === 'dashboard' || saved === 'admin')) {
+      return 'shortener';
+    }
+
+    // If user has a token but is not an admin, they cannot land on 'admin'
+    if (hasValidToken && saved === 'admin') {
+      const payload = getJwtPayload(storedToken);
+      if (!payload?.isAdmin) {
+        return 'dashboard';
+      }
+    }
+
     if (saved && VALID_TABS.includes(saved)) {
       return saved;
     }
@@ -33,6 +49,17 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState(null);
 
+  // Guard protected tabs: redirect guests to 'shortener' and non-admins to 'dashboard'
+  useEffect(() => {
+    if (!loading) {
+      if (!isAuthenticated && (activeTab === 'dashboard' || activeTab === 'admin')) {
+        setActiveTab('shortener');
+      } else if (isAuthenticated && !user?.isAdmin && activeTab === 'admin') {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [loading, isAuthenticated, user?.isAdmin, activeTab]);
+
   // Persist activeTab to localStorage
   useEffect(() => {
     if (activeTab && VALID_TABS.includes(activeTab)) {
@@ -43,6 +70,14 @@ export default function App() {
   // Resolve target tab after login: saved last screen or default to 'dashboard'
   const resolvePostLoginScreen = () => {
     const saved = localStorage.getItem(LAST_SCREEN_KEY);
+    const storedToken = localStorage.getItem('atom_token');
+    const payload = getJwtPayload(storedToken);
+    const isAdminUser = Boolean(payload?.isAdmin ?? user?.isAdmin);
+
+    if (saved === 'admin' && !isAdminUser) {
+      return 'dashboard';
+    }
+
     if (saved && VALID_TABS.includes(saved)) {
       return saved;
     }
@@ -54,12 +89,16 @@ export default function App() {
     window.location.pathname.startsWith('/auth/callback') || window.location.search.includes('token=')
   );
 
-  const showToast = (message, type = 'info') => {
+  const toastTimerRef = useRef(null);
+  const showToast = useCallback((message, type = 'info') => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast({ message, type });
-    setTimeout(() => {
+    toastTimerRef.current = setTimeout(() => {
       setToast(null);
-    }, 3000);
-  };
+    }, 3500);
+  }, []);
 
   const handleCallbackFinish = (msg, type = 'info') => {
     window.history.replaceState({}, document.title, '/');
@@ -94,8 +133,8 @@ export default function App() {
               />
             </div>
 
-            <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}>
-              {isAuthenticated ? (
+            {activeTab === 'dashboard' && (
+              isAuthenticated ? (
                 <Dashboard
                   key={refreshKey}
                   onShowToast={showToast}
@@ -104,6 +143,11 @@ export default function App() {
                     setActiveTab('analytics');
                   }}
                 />
+              ) : loading && token ? (
+                <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
+                  <RefreshCw size={24} className="spin-anim" style={{ margin: '0 auto 12px auto' }} />
+                  <p style={{ fontSize: '0.9rem' }}>Loading dashboard...</p>
+                </div>
               ) : (
                 <div className="card" style={{ textAlign: 'center', padding: '64px', maxWidth: '480px', margin: '48px auto' }}>
                   <h3 style={{ marginBottom: '8px' }}>Sign in to view Dashboard</h3>
@@ -114,20 +158,25 @@ export default function App() {
                     Sign In
                   </button>
                 </div>
-              )}
-            </div>
+              )
+            )}
 
-            <div style={{ display: activeTab === 'analytics' ? 'block' : 'none' }}>
+            {activeTab === 'analytics' && (
               <AnalyticsPage
                 initialShortCode={analyticsCode}
                 onShowToast={showToast}
                 onViewDashboard={() => setActiveTab('dashboard')}
               />
-            </div>
+            )}
 
-            <div style={{ display: activeTab === 'admin' ? 'block' : 'none' }}>
-              {user?.isAdmin ? (
+            {activeTab === 'admin' && (
+              user?.isAdmin ? (
                 <AdminPage onShowToast={showToast} />
+              ) : loading && token ? (
+                <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
+                  <RefreshCw size={24} className="spin-anim" style={{ margin: '0 auto 12px auto' }} />
+                  <p style={{ fontSize: '0.9rem' }}>Verifying permissions...</p>
+                </div>
               ) : (
                 <div className="card" style={{ textAlign: 'center', padding: '64px', maxWidth: '480px', margin: '48px auto' }}>
                   <h3 style={{ marginBottom: '8px' }}>Access Denied</h3>
@@ -135,8 +184,8 @@ export default function App() {
                     Administrator privileges required to access the admin console.
                   </p>
                 </div>
-              )}
-            </div>
+              )
+            )}
           </>
         )}
       </main>

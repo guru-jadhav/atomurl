@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import { 
   ShieldCheck, 
@@ -38,6 +38,16 @@ export default function AdminPage({ onShowToast }) {
   const [loadingErrors, setLoadingErrors] = useState(false);
   const [clearingErrors, setClearingErrors] = useState(false);
 
+  // Toast ref to maintain stable callback without re-triggering effects
+  const toastRef = useRef(onShowToast);
+  useEffect(() => {
+    toastRef.current = onShowToast;
+  });
+
+  const inFlightOverviewRef = useRef(false);
+  const inFlightUsersRef = useRef(false);
+  const inFlightErrorsRef = useRef(false);
+
   // 300ms Search Debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -49,6 +59,8 @@ export default function AdminPage({ onShowToast }) {
 
   // Fetch Overview
   const fetchOverview = useCallback(async () => {
+    if (inFlightOverviewRef.current) return;
+    inFlightOverviewRef.current = true;
     try {
       setLoadingOverview(true);
       const res = await api.getAdminOverview();
@@ -56,14 +68,17 @@ export default function AdminPage({ onShowToast }) {
         setOverview(res.data);
       }
     } catch (err) {
-      if (onShowToast) onShowToast(err.message || 'Failed to fetch admin overview', 'error');
+      toastRef.current?.(err.message || 'Failed to fetch admin overview', 'error');
     } finally {
       setLoadingOverview(false);
+      inFlightOverviewRef.current = false;
     }
-  }, [onShowToast]);
+  }, []);
 
   // Fetch Users
   const fetchUsers = useCallback(async (query = debouncedSearch, page = userPage) => {
+    if (inFlightUsersRef.current) return;
+    inFlightUsersRef.current = true;
     try {
       setLoadingUsers(true);
       const res = await api.getAdminUsers(query, page, 15);
@@ -76,26 +91,30 @@ export default function AdminPage({ onShowToast }) {
         });
       }
     } catch (err) {
-      if (onShowToast) onShowToast(err.message || 'Failed to fetch users', 'error');
+      toastRef.current?.(err.message || 'Failed to fetch users', 'error');
     } finally {
       setLoadingUsers(false);
+      inFlightUsersRef.current = false;
     }
-  }, [debouncedSearch, userPage, onShowToast]);
+  }, [debouncedSearch, userPage]);
 
-  // Fetch Errors (silent background mode for live polling)
-  const fetchErrors = useCallback(async (isSilent = false) => {
+  // Fetch Errors (only triggered on tab switch or manual refresh)
+  const fetchErrors = useCallback(async () => {
+    if (inFlightErrorsRef.current) return;
+    inFlightErrorsRef.current = true;
     try {
-      if (!isSilent) setLoadingErrors(true);
+      setLoadingErrors(true);
       const res = await api.getAdminErrors();
       if (res && res.data) {
         setErrorsList(res.data);
       }
     } catch (err) {
-      if (!isSilent && onShowToast) onShowToast(err.message || 'Failed to fetch errors', 'error');
+      toastRef.current?.(err.message || 'Failed to fetch errors', 'error');
     } finally {
-      if (!isSilent) setLoadingErrors(false);
+      setLoadingErrors(false);
+      inFlightErrorsRef.current = false;
     }
-  }, [onShowToast]);
+  }, []);
 
   // Clear Errors
   const handleClearErrors = async () => {
@@ -104,9 +123,9 @@ export default function AdminPage({ onShowToast }) {
       setClearingErrors(true);
       await api.clearAdminErrors();
       setErrorsList([]);
-      if (onShowToast) onShowToast('System error buffer cleared', 'success');
+      toastRef.current?.('System error buffer cleared', 'success');
     } catch (err) {
-      if (onShowToast) onShowToast(err.message || 'Failed to clear error buffer', 'error');
+      toastRef.current?.(err.message || 'Failed to clear error buffer', 'error');
     } finally {
       setClearingErrors(false);
     }
@@ -122,20 +141,9 @@ export default function AdminPage({ onShowToast }) {
     if (subTab === 'users') {
       fetchUsers(debouncedSearch, userPage);
     } else if (subTab === 'errors') {
-      fetchErrors(false);
+      fetchErrors();
     }
   }, [subTab, userPage, debouncedSearch, fetchUsers, fetchErrors]);
-
-  // Live polling (every 4 seconds) ONLY when active on the Errors tab
-  useEffect(() => {
-    if (subTab !== 'errors') return;
-
-    const interval = setInterval(() => {
-      fetchErrors(true); // silent background fetch
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [subTab, fetchErrors]);
 
   // Format Helpers
   const formatUptime = (seconds) => {
@@ -157,106 +165,131 @@ export default function AdminPage({ onShowToast }) {
     }
   };
 
+  const isRefreshing = subTab === 'overview' ? loadingOverview : subTab === 'users' ? loadingUsers : loadingErrors;
+
+  const handleRefreshCurrentTab = () => {
+    if (subTab === 'overview') fetchOverview();
+    else if (subTab === 'users') fetchUsers(debouncedSearch, userPage);
+    else if (subTab === 'errors') fetchErrors();
+  };
+
+  const refreshTooltip = isRefreshing 
+    ? 'Refreshing...' 
+    : subTab === 'overview' ? 'Refresh overview & metrics' 
+    : subTab === 'users' ? 'Refresh user directory' 
+    : 'Refresh error log';
+
   return (
     <div className="admin-page" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '60px' }}>
       {/* Header Banner */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ 
-              width: '38px', 
-              height: '38px', 
-              borderRadius: 'var(--radius-md)', 
-              background: 'rgba(239, 68, 68, 0.12)', 
-              color: '#ef4444', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}>
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Admin Console</h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
-                Live platform infrastructure, usage telemetry & error logs
-              </p>
-            </div>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ 
+            width: '38px', 
+            height: '38px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'rgba(239, 68, 68, 0.12)', 
+            color: '#ef4444', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}>
+            <ShieldCheck size={22} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Admin Console</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Live platform infrastructure, usage telemetry & error logs
+            </p>
           </div>
         </div>
-
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => {
-            if (subTab === 'overview') fetchOverview();
-            if (subTab === 'users') fetchUsers();
-            if (subTab === 'errors') fetchErrors(false);
-          }}
-          disabled={loadingOverview || loadingUsers || loadingErrors}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-        >
-          <RefreshCw size={15} className={(loadingOverview || loadingUsers || loadingErrors) ? 'spin-anim' : ''} />
-          <span>Refresh</span>
-        </button>
       </div>
 
-      {/* Sub-Tabs Nav Pill Group */}
+      {/* Sub-Header: Sub-Tabs & Unified Action Bar */}
       <div style={{ 
         display: 'flex', 
-        gap: '6px', 
-        background: 'var(--bg-secondary)', 
-        padding: '5px', 
-        borderRadius: 'var(--radius-lg)', 
-        border: '1px solid var(--border)',
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        gap: '16px', 
         marginBottom: '28px',
-        maxWidth: '520px'
+        flexWrap: 'wrap'
       }}>
-        <button
-          className={`nav-pill-btn ${subTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setSubTab('overview')}
-          style={{ flex: 1, justifyContent: 'center' }}
+        {/* Sub-Tabs Nav Pill Group */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '6px', 
+          background: 'var(--bg-secondary)', 
+          padding: '5px', 
+          borderRadius: 'var(--radius-lg)', 
+          border: '1px solid var(--border)',
+          width: '100%',
+          maxWidth: '480px'
+        }}>
+          <button
+            className={`nav-pill-btn ${subTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setSubTab('overview')}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            <Activity size={15} />
+            <span>Overview</span>
+          </button>
+          <button
+            className={`nav-pill-btn ${subTab === 'users' ? 'active' : ''}`}
+            onClick={() => setSubTab('users')}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            <Users size={15} />
+            <span>Users</span>
+            {overview?.metrics?.totalUsers > 0 && (
+              <span style={{ 
+                background: subTab === 'users' ? 'var(--text-primary)' : 'var(--border)', 
+                color: subTab === 'users' ? 'var(--bg-surface)' : 'var(--text-secondary)',
+                fontSize: '0.7rem', 
+                padding: '1px 6px', 
+                borderRadius: '10px',
+                fontWeight: 600
+              }}>
+                {overview.metrics.totalUsers}
+              </span>
+            )}
+          </button>
+          <button
+            className={`nav-pill-btn ${subTab === 'errors' ? 'active' : ''}`}
+            onClick={() => setSubTab('errors')}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            <AlertTriangle size={15} />
+            <span>Errors</span>
+            {errorsList.length > 0 && (
+              <span style={{ 
+                background: '#ef4444', 
+                color: '#ffffff', 
+                fontSize: '0.7rem', 
+                padding: '1px 6px', 
+                borderRadius: '10px',
+                fontWeight: 700 
+              }}>
+                {errorsList.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Unified Refresh Button */}
+        <button 
+          className="btn btn-secondary" 
+          onClick={handleRefreshCurrentTab}
+          disabled={isRefreshing}
+          style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            cursor: isRefreshing ? 'not-allowed' : 'pointer'
+          }}
+          title={refreshTooltip}
         >
-          <Activity size={15} />
-          <span>Overview</span>
-        </button>
-        <button
-          className={`nav-pill-btn ${subTab === 'users' ? 'active' : ''}`}
-          onClick={() => setSubTab('users')}
-          style={{ flex: 1, justifyContent: 'center' }}
-        >
-          <Users size={15} />
-          <span>Users</span>
-          {overview?.metrics?.totalUsers > 0 && (
-            <span style={{ 
-              background: subTab === 'users' ? 'var(--text-primary)' : 'var(--border)', 
-              color: subTab === 'users' ? 'var(--bg-surface)' : 'var(--text-secondary)',
-              fontSize: '0.7rem', 
-              padding: '1px 6px', 
-              borderRadius: '10px',
-              fontWeight: 600
-            }}>
-              {overview.metrics.totalUsers}
-            </span>
-          )}
-        </button>
-        <button
-          className={`nav-pill-btn ${subTab === 'errors' ? 'active' : ''}`}
-          onClick={() => setSubTab('errors')}
-          style={{ flex: 1, justifyContent: 'center' }}
-        >
-          <AlertTriangle size={15} />
-          <span>Errors</span>
-          {errorsList.length > 0 && (
-            <span style={{ 
-              background: '#ef4444', 
-              color: '#ffffff', 
-              fontSize: '0.7rem', 
-              padding: '1px 6px', 
-              borderRadius: '10px',
-              fontWeight: 700 
-            }}>
-              {errorsList.length}
-            </span>
-          )}
+          <RefreshCw size={15} className={isRefreshing ? 'spin-anim' : ''} />
+          <span>Refresh</span>
         </button>
       </div>
 
@@ -456,53 +489,44 @@ export default function AdminPage({ onShowToast }) {
       {/* TAB 2: USER DIRECTORY */}
       {subTab === 'users' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Dashboard-Consistent Search and Refresh Bar */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '4px' }}>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-              <Search size={16} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                className="input-text"
-                placeholder="Search users by name or email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ paddingLeft: '38px', paddingRight: search ? '36px' : '16px' }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    transition: 'color 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  title="Clear search"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-            <button 
-              className="btn btn-secondary btn-icon" 
-              onClick={() => fetchUsers(debouncedSearch, userPage)} 
-              title="Refresh users"
-            >
-              <RefreshCw size={16} className={loadingUsers ? 'spin-anim' : ''} />
-            </button>
+          {/* User Search Bar */}
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="input-text"
+              placeholder="Search users by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: '100%', paddingLeft: '38px', paddingRight: search ? '36px' : '16px' }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  transition: 'color 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -584,6 +608,7 @@ export default function AdminPage({ onShowToast }) {
               <button 
                 className="btn btn-secondary btn-icon"
                 disabled={usersData.page <= 0 || loadingUsers}
+                style={{ cursor: (usersData.page <= 0 || loadingUsers) ? 'not-allowed' : 'pointer' }}
                 onClick={() => setUserPage(prev => Math.max(0, prev - 1))}
               >
                 <ChevronLeft size={16} />
@@ -594,6 +619,7 @@ export default function AdminPage({ onShowToast }) {
               <button 
                 className="btn btn-secondary btn-icon"
                 disabled={usersData.page >= usersData.totalPages - 1 || loadingUsers}
+                style={{ cursor: (usersData.page >= usersData.totalPages - 1 || loadingUsers) ? 'not-allowed' : 'pointer' }}
                 onClick={() => setUserPage(prev => prev + 1)}
               >
                 <ChevronRight size={16} />
@@ -603,44 +629,26 @@ export default function AdminPage({ onShowToast }) {
         </div>
       )}
 
-      {/* TAB 3: ERROR LOG WITH LIVE POLLING */}
+      {/* TAB 3: ERROR LOG */}
       {subTab === 'errors' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                Buffer: <strong>{errorsList.length}</strong> / 100 recent errors
-              </span>
-              {/* Live Polling Indicator */}
-              <div style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: '6px', 
-                padding: '2px 8px', 
-                borderRadius: 'var(--radius-full)',
-                background: 'rgba(34, 197, 94, 0.12)',
-                color: '#22c55e',
-                fontSize: '0.75rem',
-                fontWeight: 600
-              }}>
-                <span style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                  display: 'inline-block',
-                  boxShadow: '0 0 6px #22c55e'
-                }} />
-                Live Stream (4s)
-              </div>
-            </div>
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              Buffer: <strong>{errorsList.length}</strong> / 100 recent errors
+            </span>
 
             {errorsList.length > 0 && (
               <button 
                 className="btn btn-secondary" 
                 onClick={handleClearErrors} 
                 disabled={clearingErrors}
-                style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ 
+                  color: '#ef4444', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  cursor: clearingErrors ? 'not-allowed' : 'pointer'
+                }}
               >
                 <Trash2 size={15} />
                 <span>Clear Buffer</span>

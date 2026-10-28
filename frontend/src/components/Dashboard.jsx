@@ -16,6 +16,14 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
   const [copiedCode, setCopiedCode] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  // Stable toast ref
+  const toastRef = useRef(onShowToast);
+  useEffect(() => {
+    toastRef.current = onShowToast;
+  });
+
+  const inFlightFetchRef = useRef(false);
+
   // Debounce search input (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,6 +34,8 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
 
   // Fetch URLs for current debounced search query (or initial load)
   const fetchUrls = useCallback(async (query) => {
+    if (inFlightFetchRef.current) return;
+    inFlightFetchRef.current = true;
     setLoading(true);
     try {
       const res = await api.getUserUrls(PAGE_SIZE, null, query || null);
@@ -33,11 +43,12 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
       setUrls(items);
       setHasMore(items.length >= PAGE_SIZE);
     } catch (err) {
-      onShowToast(err.message || 'Failed to load URLs', 'error');
+      toastRef.current?.(err.message || 'Failed to load URLs', 'error');
     } finally {
       setLoading(false);
+      inFlightFetchRef.current = false;
     }
-  }, [onShowToast]);
+  }, []);
 
   useEffect(() => {
     fetchUrls(debouncedSearch);
@@ -63,11 +74,11 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
       }
       setHasMore(newItems.length >= PAGE_SIZE);
     } catch (err) {
-      onShowToast(err.message || 'Failed to load more URLs', 'error');
+      toastRef.current?.(err.message || 'Failed to load more URLs', 'error');
     } finally {
       setLoadingMore(false);
     }
-  }, [loading, loadingMore, hasMore, urls, debouncedSearch, onShowToast]);
+  }, [loading, loadingMore, hasMore, urls, debouncedSearch]);
 
   // Stable ref for fetchMoreUrls to avoid recreating observer on every render
   const fetchMoreRef = useRef(fetchMoreUrls);
@@ -100,10 +111,10 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
     const ok = await copyToClipboard(fullUrl);
     if (ok) {
       setCopiedCode(shortCode);
-      onShowToast('Copied short link!');
+      toastRef.current?.('Copied short link!');
       setTimeout(() => setCopiedCode(null), 2000);
     } else {
-      onShowToast('Failed to copy link', 'error');
+      toastRef.current?.('Failed to copy link', 'error');
     }
   };
 
@@ -112,9 +123,9 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
       await api.deleteUrl(shortCode);
       setUrls(prev => prev.filter(u => u.shortCode !== shortCode));
       setDeleteConfirm(null);
-      onShowToast('Link deleted successfully');
+      toastRef.current?.('Link deleted successfully');
     } catch (err) {
-      onShowToast(err.message || 'Failed to delete URL', 'error');
+      toastRef.current?.(err.message || 'Failed to delete URL', 'error');
     }
   };
 
@@ -188,8 +199,14 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
             </button>
           )}
         </div>
-        <button className="btn btn-secondary btn-icon" onClick={() => fetchUrls(debouncedSearch)} title="Refresh">
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        <button 
+          className="btn btn-secondary btn-icon" 
+          onClick={() => fetchUrls(debouncedSearch)} 
+          disabled={loading}
+          style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
+          title={loading ? 'Refreshing...' : 'Refresh'}
+        >
+          <RefreshCw size={16} className={loading ? 'spin-anim' : ''} />
         </button>
       </div>
 
