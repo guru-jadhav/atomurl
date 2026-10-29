@@ -1,35 +1,21 @@
-# --- Production Logging Tip ---
-# In production / Docker Compose, cap log storage to 10MB to prevent filling up the VM disk:
-# logging:
-#   driver: "json-file"
-#   options:
-#     max-size: "10m"
-#     max-file: "3"
+# Stage 1: Build the Spring Boot application using Java 25
+FROM eclipse-temurin:25-jdk-noble AS builder
+WORKDIR /build
 
-# --- Stage 1: Build stage ---
-# Uses a Maven image with JDK 25 to compile the project
-FROM maven:3.9-eclipse-temurin-25 AS builder
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x ./mvnw
+RUN ./mvnw dependency:go-offline -B
 
+COPY src/ src/
+RUN ./mvnw clean package -DskipTests
+
+# Stage 2: Lightweight runtime image
+FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 
-# Copy the pom.xml and source code
-COPY pom.xml ./
-COPY src/ ./src/
+# Copy built jar from builder stage
+COPY --from=builder /build/target/*.jar app.jar
 
-# Package the application (skipping tests for a faster build)
-RUN mvn clean package -DskipTests
-
-# --- Stage 2: Runtime stage ---
-# Uses a lightweight JRE 25 image for the running container
-FROM eclipse-temurin:25-jre
-
-WORKDIR /app
-
-# Copy the built jar file from the builder stage
-COPY --from=builder /app/target/com.gurujadhav.atomurl-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose Spring Boot's default port
 EXPOSE 8080
-
-# Start the Spring Boot application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

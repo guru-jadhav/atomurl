@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Relational Store
+  db:
+    image: postgres:15-alpine
+    container_name: atomurl-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-atomuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-atompassword}
+      POSTGRES_DB: atomurl_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-atomuser} -d atomurl_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks:
+      - atomnet
+
+  # 2. CacheCore In-Memory C++ TCP Cache Daemon
+  cachecore:
+    image: gurujadhav471/cachecore:latest
+    container_name: atomurl-cachecore
+    restart: always
+    tty: true
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/6948"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks:
+      - atomnet
+
+  # 3. Spring Boot REST Service (Java 25)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atomurl-backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      CACHECORE_DOMAIN: cachecore
+      CACHECORE_PORT: 6948
+    depends_on:
+      db:
+        condition: service_healthy
+      cachecore:
+        condition: service_healthy
+    networks:
+      - atomnet
+
+  # 4. Frontend & Nginx Reverse Proxy (Port 80)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: atomurl-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - atomnet
+
+volumes:
+  postgres_data:
+
+networks:
+  atomnet:
+    driver: bridge
+
