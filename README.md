@@ -66,23 +66,62 @@ Most applications plug in Redis or Memcached out of the box. To demonstrate low-
 - Docker & Docker Compose
 
 ### 2. Environment Variables
-Create a `.env` file in the project root:
+
+Create your `.env` file in the project root from the provided template:
+
+```bash
+cp .env.example .env
+```
+
+> **One-Command Setup (Local Dev):** Automatically copy the template and generate a cryptographically secure 256-bit JWT secret:
+> ```bash
+> cp .env.example .env && sed -i "s|your-secure-jwt-secret-key-must-be-at-least-32-chars|$(openssl rand -base64 32)|" .env
+> ```
+
+Key variables defined in `.env`:
 
 ```env
-# GitHub OAuth
+# --- Database & CacheCore ---
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=atomuser
+DB_PASSWORD=atompassword
+CACHECORE_DOMAIN=localhost
+CACHECORE_PORT=6948
+
+# --- Admin Emails (Comma-separated list) ---
+ADMIN_EMAILS=admin@example.com
+
+# --- JWT Authentication (Min 32 characters / 256-bit secret) ---
+JWT_SECRET=your-secure-jwt-secret-key-must-be-at-least-32-chars
+
+# --- Frontend & CORS ---
+FRONTEND_REDIRECT_URL=http://localhost:3000/auth/callback
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# --- Email Delivery (Default points to local Mailpit container) ---
+# For local dev with Mailpit:
+MAIL_HOST=localhost
+MAIL_PORT=1025
+MAIL_SMTP_AUTH=false
+MAIL_SMTP_STARTTLS=false
+
+# For production / Brevo SMTP:
+# MAIL_HOST=smtp-relay.brevo.com
+# MAIL_PORT=587
+# MAIL_USERNAME=your-brevo-login@smtp-brevo.com
+# MAIL_PASSWORD=your-brevo-master-key
+# MAIL_SMTP_AUTH=true
+# MAIL_SMTP_STARTTLS=true
+
+# --- OAuth 2.0 (Optional - required only for Google/GitHub sign-in) ---
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 GITHUB_REDIRECT_URI=http://localhost:8080/api/auth/oauth/github/callback
 
-# Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/oauth/google/callback
-
-# JWT & Frontend URL
-JWT_SECRET=your_256_bit_secret_key_here
-FRONTEND_REDIRECT_URL=http://localhost:3000/auth/callback
-CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ### 3. Start Infrastructure
@@ -95,11 +134,20 @@ docker compose up -d db cachecore mailpit
 - CacheCore: `localhost:6948`
 - Mailpit Web UI: `http://localhost:8025`
 
-### 4. Run the Backend
+### 4. Run the Backend (with .env loaded)
+
+Load the environment variables from your `.env` file and launch Spring Boot:
+
 ```bash
 cd backend
-./mvnw spring-boot:run
+set -a && source ../.env && set +a && ./mvnw spring-boot:run
 ```
+
+*(Or run directly from the project root in one line)*:
+```bash
+set -a && source .env && set +a && cd backend && ./mvnw spring-boot:run
+```
+
 Backend runs on `http://localhost:8080`.
 
 ### 5. Run the Frontend

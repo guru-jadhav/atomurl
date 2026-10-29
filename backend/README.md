@@ -72,14 +72,19 @@ Managed with Flyway:
 
 ## Running Locally
 
+Ensure your `.env` configuration file is initialized from the root template:
+```bash
+cp ../.env.example ../.env
+```
+
 Make sure PostgreSQL, CacheCore, and Mailpit are running via Docker:
 ```bash
 docker compose up -d db cachecore mailpit
 ```
 
-Run the backend:
+Run the backend with your `.env` loaded:
 ```bash
-./mvnw clean spring-boot:run
+set -a && source ../.env && set +a && ./mvnw clean spring-boot:run
 ```
 
 Run tests:
