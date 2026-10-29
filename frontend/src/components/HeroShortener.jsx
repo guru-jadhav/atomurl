@@ -157,7 +157,12 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
               }}
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={loading || !longUrl.trim()}>
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={loading || !longUrl.trim()}
+            style={{ cursor: (loading || !longUrl.trim()) ? 'not-allowed' : 'pointer' }}
+          >
             {loading ? 'Shortening...' : (
               <>
                 <span>Shorten</span>

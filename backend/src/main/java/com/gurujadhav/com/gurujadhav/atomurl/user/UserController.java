@@ -2,6 +2,7 @@ package com.gurujadhav.com.gurujadhav.atomurl.user;
 
 import com.gurujadhav.com.gurujadhav.atomurl.auth.AuthService;
 import com.gurujadhav.com.gurujadhav.atomurl.admin.AdminService;
+import com.gurujadhav.com.gurujadhav.atomurl.jwt.JwtService;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.EmailDto;
 import com.gurujadhav.com.gurujadhav.atomurl.auth.OtpValidationDto;
 import com.gurujadhav.com.gurujadhav.atomurl.common.ApiResponse;
@@ -35,6 +36,9 @@ public class UserController {
 
     @Autowired 
     AdminService adminService;
+
+    @Autowired
+    JwtService jwtService;
 
     private static  final int DEFAULT_LIMIT = 15;
     private static final int MAX_LIMIT = 100;
@@ -116,8 +120,18 @@ public class UserController {
             ApiResponse<Void> errorResponse = new ApiResponse<>(400, "Invalid request", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
+
+        if (adminService.isAdmin(user.getEmail())) {
+            ApiResponse<Void> errorResponse = new ApiResponse<>(403, "Administrator email cannot be modified", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        }
+
+        if (adminService.isAdmin(email.getEmail())) {
+            ApiResponse<Void> errorResponse = new ApiResponse<>(400, "Cannot change to an administrator email address", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
         
-        if(user.getEmail().equals(email.getEmail())){
+        if(user.getEmail().equalsIgnoreCase(email.getEmail())){
             ApiResponse<Void> errorResponse = new ApiResponse<>(400, "New email must be different from current email", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
@@ -135,19 +149,41 @@ public class UserController {
 
     @RateLimit(limit = 5, duration = 60, message = "OTP Validation Limit Exceeded")
     @PostMapping("/api/user/profile/email/validate-otp")
-    public ResponseEntity<ApiResponse<User>> validateEmailChangeOtp(
+    public ResponseEntity<ApiResponse<UserEmailChangeResponse>> validateEmailChangeOtp(
         @CurrentUser(required = true) User user,
         @Valid @RequestBody OtpValidationDto otpValidation) {
         
         if(!user.getSigninProvider().equals("EMAIL")){
-            ApiResponse<User> errorResponse = new ApiResponse<>(400, "Invalid request", null);
+            ApiResponse<UserEmailChangeResponse> errorResponse = new ApiResponse<>(400, "Invalid request", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
+        if (adminService.isAdmin(user.getEmail())) {
+            ApiResponse<UserEmailChangeResponse> errorResponse = new ApiResponse<>(403, "Administrator email cannot be modified", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        }
+
+        if (adminService.isAdmin(otpValidation.getEmail())) {
+            ApiResponse<UserEmailChangeResponse> errorResponse = new ApiResponse<>(400, "Cannot change to an administrator email address", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
+        Optional<User> checkUser = userService.getUserByEmail(otpValidation.getEmail());
+        if(checkUser.isPresent() && !checkUser.get().getId().equals(user.getId())){
+            ApiResponse<UserEmailChangeResponse> errorResponse = new ApiResponse<>(400, "Email already in use", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
         authService.otpValidationHelper(otpValidation);
+
+        int nextTokenVersion = (user.getTokenVersion() != null ? user.getTokenVersion() : 1) + 1;
+        user.setTokenVersion(nextTokenVersion);
         User updatedUser = userService.updateEmail(user, otpValidation.getEmail());
 
-        ApiResponse<User> successResponse = new ApiResponse<>(200, "success", updatedUser);
+        String newToken = jwtService.getJWTToken(updatedUser);
+
+        UserEmailChangeResponse responseData = new UserEmailChangeResponse(updatedUser, newToken);
+        ApiResponse<UserEmailChangeResponse> successResponse = new ApiResponse<>(200, "success", responseData);
         return ResponseEntity.status(HttpStatus.OK).body(successResponse);
     }
     

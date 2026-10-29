@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { X, User, Mail, Shield, Check, Clock } from 'lucide-react';
 
 export default function ProfileModal({ onClose, onShowToast }) {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, loginWithToken } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [nameLoading, setNameLoading] = useState(false);
 
@@ -57,7 +57,10 @@ export default function ProfileModal({ onClose, onShowToast }) {
     if (!otp.trim()) return;
     setEmailLoading(true);
     try {
-      await api.validateEmailChangeOtp(newEmail.trim(), otp.trim());
+      const res = await api.validateEmailChangeOtp(newEmail.trim(), otp.trim());
+      if (res?.data?.token) {
+        loginWithToken(res.data.token);
+      }
       await refreshUser();
       onShowToast('Email address successfully changed!');
       setEmailStep(1);
@@ -122,8 +125,15 @@ export default function ProfileModal({ onClose, onShowToast }) {
           </div>
         </form>
 
-        {/* Update Email Form (Only enabled for EMAIL provider) */}
-        {user?.signinProvider === 'EMAIL' ? (
+        {/* Update Email Form */}
+        {user?.isAdmin ? (
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Change Email Address</label>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              Administrator emails are managed via server configuration and cannot be modified.
+            </div>
+          </div>
+        ) : user?.signinProvider === 'EMAIL' ? (
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Change Email Address</label>
             {emailStep === 1 ? (
@@ -163,8 +173,11 @@ export default function ProfileModal({ onClose, onShowToast }) {
             )}
           </div>
         ) : (
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 'var(--radius-md)' }}>
-            Email managed by {user?.signinProvider} SSO (cannot be edited).
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>Change Email Address</label>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              Email managed by {user?.signinProvider} SSO (cannot be edited).
+            </div>
           </div>
         )}
 

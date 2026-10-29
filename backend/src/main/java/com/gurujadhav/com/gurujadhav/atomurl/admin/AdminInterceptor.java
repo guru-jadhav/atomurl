@@ -44,6 +44,13 @@ public class AdminInterceptor implements HandlerInterceptor {
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new BaseApiException(HttpStatus.UNAUTHORIZED, "User not found"));
 
+        Integer tokenVersion = jwtService.extractTokenVersion(token);
+        int expectedVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 1;
+        int actualVersion = tokenVersion != null ? tokenVersion : 1;
+        if (actualVersion != expectedVersion) {
+            throw new InvalidTokenException("Invalid or expired JWT token");
+        }
+
         if (!adminService.isAdmin(user.getEmail())) {
             throw new BaseApiException(HttpStatus.FORBIDDEN, "Access denied: Administrator privileges required");
         }

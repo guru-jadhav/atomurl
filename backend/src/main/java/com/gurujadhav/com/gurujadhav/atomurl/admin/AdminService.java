@@ -75,7 +75,7 @@ public class AdminService {
     public Map<String, Object> checkCacheCoreHealth() {
         long start = System.currentTimeMillis();
         try {
-            cache.GET(0, "atomurl_health_check_ping", String.class);
+            cache.PING();
             long latency = System.currentTimeMillis() - start;
             return Map.of("status", "UP", "latencyMs", latency);
         } catch (Exception e) {

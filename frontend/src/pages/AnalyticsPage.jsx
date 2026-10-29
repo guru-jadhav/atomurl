@@ -196,9 +196,9 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
             type="submit"
             className="btn btn-primary"
             disabled={loading || !code.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: (loading || !code.trim()) ? 'not-allowed' : 'pointer' }}
           >
-            {loading ? <RefreshCw size={16} className="spin" /> : <Search size={16} />}
+            {loading ? <RefreshCw size={16} className="spin-anim" /> : <Search size={16} />}
             <span>{loading ? 'Analyzing...' : 'Analyze Link'}</span>
           </button>
         </form>
@@ -262,12 +262,14 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
                   <button
                     key={item.shortCode}
                     onClick={() => handleSelectLink(item.shortCode)}
+                    disabled={loading}
                     className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
                     style={{
                       padding: '5px 10px',
                       fontSize: '0.8rem',
                       fontFamily: 'var(--font-mono)',
                       flexShrink: 0,
+                      cursor: loading ? 'not-allowed' : 'pointer',
                       whiteSpace: 'nowrap',
                       display: 'inline-flex',
                       alignItems: 'center',

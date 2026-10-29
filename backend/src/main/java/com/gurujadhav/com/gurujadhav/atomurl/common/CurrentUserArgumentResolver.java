@@ -52,6 +52,14 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         Long userId = jwtService.extractUserId(token);
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new InvalidTokenException("Invalid or expired JWT token"));
+
+        Integer tokenVersion = jwtService.extractTokenVersion(token);
+        int expectedVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 1;
+        int actualVersion = tokenVersion != null ? tokenVersion : 1;
+        if (actualVersion != expectedVersion) {
+            throw new InvalidTokenException("Invalid or expired JWT token");
+        }
+
         return user;
     }
 

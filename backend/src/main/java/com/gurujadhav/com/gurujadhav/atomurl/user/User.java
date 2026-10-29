@@ -24,15 +24,23 @@ public class User {
     private String name;
 
     @Column(name = "last_login_date")
+    @Builder.Default
     private LocalDateTime lastLoginDate = LocalDateTime.now();
 
     @Column(name = "signin_provider", nullable = false)
     private String signinProvider;
 
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Integer tokenVersion = 1;
+
     @PrePersist
     protected void onCreate() {
         if(this.lastLoginDate == null){
             this.lastLoginDate = LocalDateTime.now();
+        }
+        if(this.tokenVersion == null){
+            this.tokenVersion = 1;
         }
     }
 }

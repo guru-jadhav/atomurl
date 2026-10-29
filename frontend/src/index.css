@@ -266,9 +266,10 @@ code, .font-mono {
   white-space: nowrap;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[disabled] {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: not-allowed !important;
 }
 
 .btn-primary {

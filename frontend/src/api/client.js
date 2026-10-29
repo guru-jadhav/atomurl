@@ -16,6 +16,10 @@ export async function apiFetch(endpoint, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
+    if (response.status === 401 && localStorage.getItem('atom_token')) {
+      localStorage.removeItem('atom_token');
+      window.dispatchEvent(new Event('atom_auth_expired'));
+    }
     const errorMsg = data?.message || `Request failed with status ${response.status}`;
     const error = new Error(errorMsg);
     error.status = response.status;
