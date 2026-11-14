@@ -26,6 +26,9 @@ services:
     container_name: atomurl-cachecore
     restart: always
     tty: true
+    volumes:
+      - ./cachecore.conf:/app/store.conf
+    command: ["/app/store.conf"]
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/6948"]
       interval: 3s
