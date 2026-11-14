@@ -17,7 +17,7 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @RateLimit(limit = 1, duration = 30, message = "OTP already sent")
+    @RateLimit(limit = 1, duration = 60, message = "OTP already sent")
     @PostMapping("/api/auth/send-otp")
     public ResponseEntity<ApiResponse<Void>> sendOtp( @Valid @RequestBody EmailDto email) {
 

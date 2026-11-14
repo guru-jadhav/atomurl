@@ -28,6 +28,9 @@ services:
     tty: true
     ports:
       - "6948:6948"
+    volumes:
+      - ./cachecore.conf:/app/store.conf
+    command: ["/app/store.conf"]
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/6948"]
       interval: 3s

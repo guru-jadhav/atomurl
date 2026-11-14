@@ -27,8 +27,11 @@ flowchart TD
 
 Most applications plug in Redis or Memcached out of the box. To demonstrate low-level systems and protocol design alongside application engineering, atomURL uses a custom-built caching ecosystem:
 
-1. **[CacheCore (C++)](https://github.com/guru-jadhav/CacheCore)**: Standalone in-memory TCP cache daemon written in C++. Handles low-latency key-value storage, rate limiting counters, and health pings (`PING`), running containerized alongside the application.
-2. **[CacheClient (Java)](https://github.com/guru-jadhav/CacheClient)**: Published Java SDK (`com.github.guru-jadhav:CacheClient`) that handles connection pooling, TCP socket communication, and command serialization for the Spring Boot backend.
+1. **[CacheCore (C++)](https://github.com/guru-jadhav/CacheCore)**: Standalone in-memory TCP cache daemon written in C++. Handles low-latency key-value storage, atomic rate limiting counters (`INCR`, `EXPIRE`), and health pings (`PING`), running containerized with dedicated database partitioning (`cachecore.conf`):
+   - **`DB[0]` (URL Redirects)**: `maxCapacity=10000 ttl=86400 evictInterval=60` — 24-hour default TTL for cached redirects; offloads 80%+ read traffic from PostgreSQL.
+   - **`DB[1]` (Authentication OTPs)**: `maxCapacity=10000 ttl=300 evictInterval=30` — 5-minute TTL validation window matching `AuthService`.
+   - **`DB[2]` (IP Rate Limiting)**: `maxCapacity=100000 ttl=60 evictInterval=10` — 60-second sliding window; 100,000 capacity prevents attackers from flushing throttled counters via IP rotation (anti-LRU bypass).
+2. **[CacheClient (Java)](https://github.com/guru-jadhav/CacheClient)**: Published Java SDK (`com.github.guru-jadhav:CacheClient:v1.0.2`) on JitPack. Features dual-stack DNS resolution (IPv4/IPv6 fallback), buffered RESP reassembly for fragmented TCP frames, and `AutoCloseable` socket lifecycle management wired directly to Spring's container shutdown (`@Bean(destroyMethod = "close")`).
 3. **atomURL (Full-Stack Service)**: The production consumer tying together the C++ cache daemon, the Java client library, PostgreSQL persistence, and the React frontend.
 
 ## Features
@@ -178,3 +181,40 @@ Frontend runs on `http://localhost:3000`.
 | `GET` | `/api/admin/users` | Paginated platform user directory with search (`query`, `page`, `limit`) | Admin |
 | `GET` | `/api/admin/errors` | In-memory system error buffer (recent 100 entries) | Admin |
 | `DELETE`| `/api/admin/errors` | Clear in-memory error buffer | Admin |
+
+## Performance & Benchmarks
+
+The microservice stack was benchmarked across 100 to 2,000 concurrent connections using `wrk`. Under an 80/20 mixed read workload (80% cache hits, 20% database lookups), the system sustained ~600 RPS with a median latency of 155 ms and 0 dropped connections. CacheCore memory footprint remained bounded under 1.5 MB throughout all tests.
+
+See [benchmarks/README.md](benchmarks/README.md) for the full benchmark matrix, resource utilization data, and reproduction commands.
+
+---
+
+## Building & Packaging
+
+### Local Compilation (Backend)
+Prerequisites: JDK 25 and Maven.
+```bash
+cd backend
+
+# Compile all source files and verify dependency resolution
+./mvnw clean compile
+
+# Package executable Spring Boot JAR (skipping unit tests)
+./mvnw clean package -DskipTests
+```
+The compiled JAR is produced at `backend/target/atomurl-0.0.1-SNAPSHOT.jar`.
+
+### Full-Stack Docker Build
+Build and run the entire multi-service production topology:
+```bash
+# Build images and start all services in detached mode
+docker compose up -d --build
+
+# Inspect container health and running services
+docker compose ps
+
+# View unified service logs
+docker compose logs -f app cachecore db
+```
+
