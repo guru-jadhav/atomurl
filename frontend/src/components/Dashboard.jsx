@@ -107,7 +107,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
   }, []);
 
   const handleCopy = async (shortCode) => {
-    const fullUrl = `${API_BASE}/${shortCode}`;
+    const fullUrl = `${window.location.origin}/${shortCode}`;
     const ok = await copyToClipboard(fullUrl);
     if (ok) {
       setCopiedCode(shortCode);
@@ -242,7 +242,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
               <div style={{ minWidth: '180px', flex: 1, maxWidth: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                   <a
-                    href={`${API_BASE}/${item.shortCode}`}
+                    href={`${window.location.origin}/${item.shortCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -309,7 +309,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
                   <BarChart2 size={15} />
                 </button>
                 <a
-                  href={`${API_BASE}/${item.shortCode}`}
+                  href={`${window.location.origin}/${item.shortCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-icon"

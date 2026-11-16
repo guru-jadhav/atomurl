@@ -95,7 +95,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
     try {
       const res = await api.createShortUrl(target);
       const data = res.data || {};
-      const fullShortUrl = `${API_BASE}/${data.shortCode}`;
+      const fullShortUrl = `${window.location.origin}/${data.shortCode}`;
       setResult({
         ...data,
         shortUrl: fullShortUrl
@@ -279,7 +279,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
               </div>
               <span style={{ fontWeight: 600, fontSize: '0.925rem' }}>Recent Link:</span>
               <a
-                href={`${API_BASE}/${recentLink.shortCode}`}
+                href={`${window.location.origin}/${recentLink.shortCode}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

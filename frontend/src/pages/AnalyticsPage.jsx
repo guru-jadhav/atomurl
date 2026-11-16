@@ -110,7 +110,7 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
 
   const handleCopyLink = async () => {
     if (!searchedCode) return;
-    const fullUrl = `${API_BASE}/${searchedCode}`;
+    const fullUrl = `${window.location.origin}/${searchedCode}`;
     const ok = await copyToClipboard(fullUrl);
     if (ok) {
       setCopied(true);
@@ -355,7 +355,7 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
                   <span>{copied ? 'Copied!' : 'Copy'}</span>
                 </button>
                 <a
-                  href={`${API_BASE}/${searchedCode}`}
+                  href={`${window.location.origin}/${searchedCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-icon"
