@@ -1,9 +1,0 @@
-# Cloudflare Pages Redirects
-# 1. OAuth authentication callback route
-/auth/*             /index.html    200
-
-# 2. Static assets directory
-/assets/*           /assets/:splat 200
-
-# 3. Short URLs forward to backend redirect engine (from VITE_API_BASE_URL)
-/*                  https://api-atomurl.gurujadhav.in/:splat  307

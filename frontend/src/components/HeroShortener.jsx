@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api, API_BASE } from '../api/client';
+import { api, API_BASE, SHORT_URL_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
 import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
 
@@ -95,7 +95,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
     try {
       const res = await api.createShortUrl(target);
       const data = res.data || {};
-      const fullShortUrl = `${window.location.origin}/${data.shortCode}`;
+      const fullShortUrl = `${SHORT_URL_BASE}/${data.shortCode}`;
       setResult({
         ...data,
         shortUrl: fullShortUrl
@@ -279,7 +279,7 @@ export default function HeroShortener({ onShowToast, onUrlCreated, onViewAnalyti
               </div>
               <span style={{ fontWeight: 600, fontSize: '0.925rem' }}>Recent Link:</span>
               <a
-                href={`${window.location.origin}/${recentLink.shortCode}`}
+                href={`${SHORT_URL_BASE}/${recentLink.shortCode}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

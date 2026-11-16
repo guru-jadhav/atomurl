@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { api, API_BASE } from '../api/client';
+import { api, API_BASE, SHORT_URL_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
 import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
 import { Copy, Check, Trash2, BarChart2, ExternalLink, Search, RefreshCw, Link2, MousePointer, X } from 'lucide-react';
@@ -107,7 +107,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
   }, []);
 
   const handleCopy = async (shortCode) => {
-    const fullUrl = `${window.location.origin}/${shortCode}`;
+    const fullUrl = `${SHORT_URL_BASE}/${shortCode}`;
     const ok = await copyToClipboard(fullUrl);
     if (ok) {
       setCopiedCode(shortCode);
@@ -242,7 +242,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
               <div style={{ minWidth: '180px', flex: 1, maxWidth: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                   <a
-                    href={`${window.location.origin}/${item.shortCode}`}
+                    href={`${SHORT_URL_BASE}/${item.shortCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -309,7 +309,7 @@ export default function Dashboard({ onShowToast, onViewAnalytics }) {
                   <BarChart2 size={15} />
                 </button>
                 <a
-                  href={`${window.location.origin}/${item.shortCode}`}
+                  href={`${SHORT_URL_BASE}/${item.shortCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-icon"
