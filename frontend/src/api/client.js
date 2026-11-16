@@ -4,12 +4,6 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (
     : (typeof window !== 'undefined' ? window.location.origin : '')
 );
 
-export const SHORT_URL_BASE = (import.meta.env.VITE_SHORT_URL_BASE || '').replace(/\/+$/, '') || (
-  typeof window !== 'undefined' && (window.location.port === '3000' || window.location.port === '5173')
-    ? `http://${window.location.hostname}:8080`
-    : (typeof window !== 'undefined' ? window.location.origin : '')
-);
-
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem('atom_token');
   const headers = {

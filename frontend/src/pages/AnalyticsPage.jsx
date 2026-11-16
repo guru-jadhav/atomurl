@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api, API_BASE, SHORT_URL_BASE } from '../api/client';
+import { api, API_BASE } from '../api/client';
 import { copyToClipboard } from '../utils/clipboard';
 import { formatCompactNumber, getFaviconUrl } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
@@ -110,7 +110,7 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
 
   const handleCopyLink = async () => {
     if (!searchedCode) return;
-    const fullUrl = `${SHORT_URL_BASE}/${searchedCode}`;
+    const fullUrl = `${API_BASE}/${searchedCode}`;
     const ok = await copyToClipboard(fullUrl);
     if (ok) {
       setCopied(true);
@@ -355,7 +355,7 @@ export default function AnalyticsPage({ initialShortCode, onShowToast, onViewDas
                   <span>{copied ? 'Copied!' : 'Copy'}</span>
                 </button>
                 <a
-                  href={`${SHORT_URL_BASE}/${searchedCode}`}
+                  href={`${API_BASE}/${searchedCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-icon"

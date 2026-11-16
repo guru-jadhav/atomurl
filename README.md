@@ -2,34 +2,25 @@
 
 A self-hosted URL shortener with real-time click analytics, user authentication, an end-to-end custom caching architecture, and a comprehensive live admin telemetry console.
 
-> **Live Production Deployments:**
-> - **Web Application**: [https://atomurl.gurujadhav.in](https://atomurl.gurujadhav.in) (React 19 SPA deployed on Cloudflare Pages global CDN)
-> - **API Gateway**: [https://api-atomurl.gurujadhav.in](https://api-atomurl.gurujadhav.in) (Spring Boot 3 + PostgreSQL + CacheCore on GCP Always Free VM via Nginx Gateway)
-
 ## Architecture
 
 atomURL is designed as a distributed system built from scratch, including its own custom caching infrastructure rather than third-party solutions:
 
-- **Frontend**: React 19 + Vite (Vanilla CSS, custom design system, zero-FOUC theme engine)
-- **Edge Routing**: Cloudflare Pages for static SPA assets + Cloudflare Edge Redirect Rules for sub-millisecond shortlink 307 forwarding
-- **Backend Gateway**: Nginx reverse proxy with SSL bridging on a containerized Docker bridge network
-- **Application Core**: Spring Boot 3 (Java 25)
-- **Custom Cache Client**: [CacheClient](https://github.com/guru-jadhav/CacheClient) — Custom Java driver built to communicate with CacheCore over raw TCP sockets
-- **Custom In-Memory Cache**: [CacheCore](https://github.com/guru-jadhav/CacheCore) — Custom in-memory key-value cache server written in C++ (Docker: `gurujadhav471/cachecore`, port 6948)
+- **Frontend**: React 19 + Vite (Vanilla CSS, custom design system)
+- **Backend**: Spring Boot 3 (Java 25)
+- **Custom Cache Client**: [CacheClient](https://github.com/guru-jadhav/CacheClient) — Custom Java driver built to communicate with CacheCore over raw TCP sockets.
+- **Custom In-Memory Cache**: [CacheCore](https://github.com/guru-jadhav/CacheCore) — Custom in-memory key-value cache server written in C++ (Docker: `gurujadhav471/cachecore`, port 6948).
 - **Database**: PostgreSQL 15 (relational persistence & Flyway migrations)
-- **Email**: Mailpit (local SMTP for email OTP verification in development) / Brevo SMTP relay in production
+- **Email**: Mailpit (local SMTP for email OTP verification in development) / SMTP relay in production
 - **Auth & Security**: Stateless JWTs with Email OTP, Google & GitHub OAuth2, and instant token revocation via `token_version`
 
 ```mermaid
 flowchart TD
-    Client["Browser / Client / curl"] -->|Web UI / Dashboard| Pages["Cloudflare Pages CDN<br><b>atomurl.gurujadhav.in</b>"]
-    Client -->|Shortcode Redirect /4| CF_Rules["Cloudflare Edge Redirect Rule<br><i>307 Forward</i>"]
-    CF_Rules --> Nginx["Nginx Reverse Proxy Gateway<br><b>api-atomurl.gurujadhav.in</b>"]
-    Pages -->|REST API Calls| Nginx
-    Nginx --> Backend["Backend (Spring Boot 3 / Java 25)"]
+    Client["Browser / Mobile"] --> Frontend["Frontend (React 19 + Vite)"]
+    Frontend --> Backend["Backend (Spring Boot 3 / Java 25)"]
     Backend -->|CacheClient Java SDK| CacheCore["CacheCore C++ Cache (TCP :6948)"]
-    Backend --> Postgres["PostgreSQL 15 (:5432)"]
-    Backend --> Mailpit["Brevo SMTP Relay / Mailpit"]
+    Backend --> Postgres["PostgreSQL (:5432)"]
+    Backend --> Mailpit["Mailpit / SMTP Relay"]
 ```
 
 ## End-to-End System Design (Custom Cache Stack)
@@ -163,21 +154,12 @@ set -a && source .env && set +a && cd backend && ./mvnw spring-boot:run
 Backend runs on `http://localhost:8080`.
 
 ### 5. Run the Frontend
-
-The React frontend requires zero initial configuration and automatically proxies API requests to `http://localhost:8080` in local development mode.
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
 Frontend runs on `http://localhost:3000`.
-
-#### Frontend Environment Variables (Optional)
-If connecting to an external backend or custom shortlink domain, configure `frontend/.env` (see `frontend/.env.example`):
-- `VITE_API_BASE_URL`: Base URL for REST API endpoints (defaults to `http://localhost:8080` in dev, or `window.location.origin` in production).
-- `VITE_SHORT_URL_BASE`: Domain used for displaying and copying generated shortlinks (e.g. `https://atomurl.gurujadhav.in` or custom domain `https://atu.rl`; defaults to `window.location.origin` in production and `:8080` in dev).
 
 ## API Overview
 
