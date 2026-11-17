@@ -43,8 +43,25 @@ export function AuthProvider({ children }) {
     }
     return stored;
   });
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  // Synchronously initialize user from stored unexpired token to prevent auth race conditions
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('atom_token');
+    if (!stored || isTokenExpired(stored)) return null;
+    const payload = getJwtPayload(stored);
+    if (!payload) return null;
+    return {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name || payload.email?.split('@')[0] || 'Account',
+      isAdmin: Boolean(payload.isAdmin)
+    };
+  });
+
+  const [loading, setLoading] = useState(() => {
+    const stored = localStorage.getItem('atom_token');
+    return Boolean(stored && !isTokenExpired(stored));
+  });
   const [theme, setTheme] = useState(() => localStorage.getItem('atom_theme') || 'dark');
 
   // Theme synchronization
@@ -91,6 +108,15 @@ export function AuthProvider({ children }) {
   const loginWithToken = (newToken) => {
     localStorage.setItem('atom_token', newToken);
     setToken(newToken);
+    const payload = getJwtPayload(newToken);
+    if (payload) {
+      setUser({
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name || payload.email?.split('@')[0] || 'Account',
+        isAdmin: Boolean(payload.isAdmin)
+      });
+    }
   };
 
   const logout = () => {

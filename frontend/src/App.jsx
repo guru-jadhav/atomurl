@@ -10,7 +10,6 @@ import AboutModal from './components/AboutModal';
 import AuthModal from './components/AuthModal';
 import AuthCallback from './pages/AuthCallback';
 import { useAuth, isTokenExpired, getJwtPayload } from './context/AuthContext';
-import { RefreshCw } from 'lucide-react';
 
 const LAST_SCREEN_KEY = 'atom_last_screen';
 const VALID_TABS = ['shortener', 'dashboard', 'analytics', 'admin'];
@@ -24,16 +23,16 @@ export default function App() {
     const hasValidToken = storedToken && !isTokenExpired(storedToken);
     const saved = localStorage.getItem(LAST_SCREEN_KEY);
 
-    if (!hasValidToken && (saved === 'dashboard' || saved === 'admin')) {
+    // Guests can only land on 'shortener' or 'analytics'
+    if (!hasValidToken) {
+      if (saved === 'analytics') return 'analytics';
       return 'shortener';
     }
 
-    // If user has a token but is not an admin, they cannot land on 'admin'
-    if (hasValidToken && saved === 'admin') {
-      const payload = getJwtPayload(storedToken);
-      if (!payload?.isAdmin) {
-        return 'dashboard';
-      }
+    // Authenticated non-admins cannot land on 'admin'
+    const payload = getJwtPayload(storedToken);
+    if (saved === 'admin' && !payload?.isAdmin) {
+      return 'dashboard';
     }
 
     if (saved && VALID_TABS.includes(saved)) {
@@ -51,21 +50,27 @@ export default function App() {
 
   // Guard protected tabs: redirect guests to 'shortener' and non-admins to 'dashboard'
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated && (activeTab === 'dashboard' || activeTab === 'admin')) {
+    if (!isAuthenticated) {
+      if (activeTab === 'dashboard' || activeTab === 'admin') {
         setActiveTab('shortener');
-      } else if (isAuthenticated && !user?.isAdmin && activeTab === 'admin') {
-        setActiveTab('dashboard');
       }
+    } else if (!user?.isAdmin && activeTab === 'admin') {
+      setActiveTab('dashboard');
     }
-  }, [loading, isAuthenticated, user?.isAdmin, activeTab]);
+  }, [isAuthenticated, user?.isAdmin, activeTab]);
 
-  // Persist activeTab to localStorage
+  // Persist activeTab to localStorage (only persist tabs the user is permitted to visit)
   useEffect(() => {
     if (activeTab && VALID_TABS.includes(activeTab)) {
-      localStorage.setItem(LAST_SCREEN_KEY, activeTab);
+      if (!isAuthenticated && (activeTab === 'dashboard' || activeTab === 'admin')) {
+        localStorage.setItem(LAST_SCREEN_KEY, 'shortener');
+      } else if (!user?.isAdmin && activeTab === 'admin') {
+        localStorage.setItem(LAST_SCREEN_KEY, 'dashboard');
+      } else {
+        localStorage.setItem(LAST_SCREEN_KEY, activeTab);
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, isAuthenticated, user?.isAdmin]);
 
   // Resolve target tab after login: saved last screen or default to 'dashboard'
   const resolvePostLoginScreen = () => {
@@ -133,32 +138,15 @@ export default function App() {
               />
             </div>
 
-            {activeTab === 'dashboard' && (
-              isAuthenticated ? (
-                <Dashboard
-                  key={refreshKey}
-                  onShowToast={showToast}
-                  onViewAnalytics={(code) => {
-                    setAnalyticsCode(code);
-                    setActiveTab('analytics');
-                  }}
-                />
-              ) : loading && token ? (
-                <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-                  <RefreshCw size={24} className="spin-anim" style={{ margin: '0 auto 12px auto' }} />
-                  <p style={{ fontSize: '0.9rem' }}>Loading dashboard...</p>
-                </div>
-              ) : (
-                <div className="card" style={{ textAlign: 'center', padding: '64px', maxWidth: '480px', margin: '48px auto' }}>
-                  <h3 style={{ marginBottom: '8px' }}>Sign in to view Dashboard</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
-                    Access and manage all your shortened links and click analytics.
-                  </p>
-                  <button className="btn btn-primary" onClick={() => setShowAuthModal(true)}>
-                    Sign In
-                  </button>
-                </div>
-              )
+            {activeTab === 'dashboard' && isAuthenticated && (
+              <Dashboard
+                key={refreshKey}
+                onShowToast={showToast}
+                onViewAnalytics={(code) => {
+                  setAnalyticsCode(code);
+                  setActiveTab('analytics');
+                }}
+              />
             )}
 
             {activeTab === 'analytics' && (
@@ -169,22 +157,8 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'admin' && (
-              user?.isAdmin ? (
-                <AdminPage onShowToast={showToast} />
-              ) : loading && token ? (
-                <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-                  <RefreshCw size={24} className="spin-anim" style={{ margin: '0 auto 12px auto' }} />
-                  <p style={{ fontSize: '0.9rem' }}>Verifying permissions...</p>
-                </div>
-              ) : (
-                <div className="card" style={{ textAlign: 'center', padding: '64px', maxWidth: '480px', margin: '48px auto' }}>
-                  <h3 style={{ marginBottom: '8px' }}>Access Denied</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    Administrator privileges required to access the admin console.
-                  </p>
-                </div>
-              )
+            {activeTab === 'admin' && user?.isAdmin && (
+              <AdminPage onShowToast={showToast} />
             )}
           </>
         )}
